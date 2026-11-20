@@ -344,10 +344,13 @@ main.loading {
 }
 
 /* Skip layout/paint for cards far off-screen (N6). The intrinsic size is a
-   placeholder height that the browser replaces with the real one once seen. */
+   placeholder height that the browser replaces with the real one once seen.
+   It deliberately overestimates (cards are ~120–170px): if the page came out
+   shorter than it really is, returning to a deep scroll position would be
+   clamped; a little extra height is corrected by the anchor restore. */
 .card-list > li {
   content-visibility: auto;
-  contain-intrinsic-size: auto 118px;
+  contain-intrinsic-size: auto 176px;
 }
 
 .list-sentinel {
@@ -423,7 +426,7 @@ main.loading {
   }
 
   .card-list > li {
-    contain-intrinsic-size: auto 330px;
+    contain-intrinsic-size: auto 380px;
   }
 
   .card {
@@ -741,5 +744,529 @@ main.loading {
 @media (prefers-reduced-motion: reduce) {
   * {
     transition: none !important;
+  }
+}
+
+/* ============================================================ phase 3: search & filters */
+
+html {
+  /* Keep focused/anchored content clear of the sticky app bar + search toolbar. */
+  scroll-padding-top: calc(var(--bar-h) + 120px);
+}
+
+html:has(dialog[open]) {
+  overflow: hidden;
+}
+
+.button-secondary {
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.link-button {
+  min-height: var(--tap);
+  padding: 0 8px;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.icon-button {
+  display: inline-grid;
+  place-items: center;
+  width: var(--tap);
+  height: var(--tap);
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+}
+
+/* ------------------------------------------------------------ toolbar */
+.home {
+  padding-top: 0;
+}
+
+.home-toolbar {
+  position: sticky;
+  top: calc(var(--bar-h) + env(safe-area-inset-top));
+  z-index: 4;
+  margin: 0 calc(-1 * var(--gutter));
+  padding: 10px var(--gutter) 10px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+}
+
+.search-row {
+  display: flex;
+  gap: 8px;
+}
+
+.search-field {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  min-height: var(--tap);
+  padding: 0 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--text-2);
+}
+
+.search-field:focus-within {
+  border-color: var(--focus);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--focus) 35%, transparent);
+}
+
+.search-input {
+  flex: 1;
+  min-width: 0;
+  height: 42px;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 1rem; /* ≥16px stops iOS zooming on focus */
+  outline: none;
+}
+
+.search-input::placeholder {
+  color: var(--text-2);
+}
+
+.filter-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: var(--tap);
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.filter-button.is-active {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.filter-count:not(:empty) {
+  display: inline-grid;
+  place-items: center;
+  min-width: 1.4rem;
+  height: 1.4rem;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-text);
+  font-size: 0.8125rem;
+}
+
+/* Below 360px the label is dropped; the icon and count remain. */
+@media (max-width: 359px) {
+  .filter-button-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+}
+
+/* Active filter chips scroll sideways so the toolbar keeps one row. */
+.chip-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.chip-row[hidden] {
+  display: none;
+}
+
+.chips.active-chips {
+  flex: 1;
+  flex-wrap: nowrap;
+  /* fade the right edge to hint that the row scrolls */
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 24px), transparent);
+  mask-image: linear-gradient(to right, #000 calc(100% - 24px), transparent);
+  padding-right: 24px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  min-width: 0;
+}
+
+.active-chips::-webkit-scrollbar {
+  display: none;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 36px;
+  padding: 0 8px 0 12px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+  /* 36px visible, 44px touch target */
+  position: relative;
+}
+
+.chip::after {
+  content: '';
+  position: absolute;
+  inset: -4px 0;
+}
+
+.chip .icon {
+  width: 1rem;
+  height: 1rem;
+  opacity: 0.7;
+}
+
+.results-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 12px 0 10px;
+}
+
+.result-count {
+  color: var(--text-2);
+  font-size: 0.9375rem;
+  min-width: 0;
+}
+
+.sort {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+}
+
+.sort-label {
+  color: var(--text-2);
+  font-size: 0.875rem;
+}
+
+.sort-select {
+  min-height: var(--tap);
+  padding: 0 28px 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface)
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M7 10l5 5 5-5'/%3E%3C/svg%3E")
+    no-repeat right 6px center / 18px;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.9375rem;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.list-sentinel[hidden] {
+  display: none;
+}
+
+.no-results {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 48px 0;
+  text-align: center;
+}
+
+.no-results-title {
+  font-family: var(--font-head);
+  font-size: 1.375rem;
+  font-weight: 600;
+}
+
+.no-results-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+/* ------------------------------------------------------------ filter sheet
+   Phone: bottom sheet. ≥700px: panel on the right. */
+.sheet {
+  position: fixed;
+  inset: auto 0 0 0;
+  width: 100%;
+  max-width: 100%;
+  max-height: min(88dvh, 88vh);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 20px 20px 0 0;
+  background: var(--bg);
+  color: var(--text);
+  box-shadow: 0 -8px 32px rgb(0 0 0 / 0.25);
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.sheet[open] {
+  display: flex;
+  animation: sheet-up 180ms ease-out;
+}
+
+.sheet::backdrop {
+  background: rgb(0 0 0 / 0.45);
+}
+
+@keyframes sheet-up {
+  from {
+    transform: translateY(24px);
+    opacity: 0.6;
+  }
+}
+
+.sheet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 8px 8px var(--gutter);
+  border-bottom: 1px solid var(--border);
+}
+
+.sheet-head h2 {
+  font-size: 1.25rem;
+}
+
+.sheet-body {
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 4px var(--gutter) 16px;
+}
+
+.sheet-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px var(--gutter) calc(10px + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--border);
+  background: var(--bg);
+}
+
+.sheet-show {
+  flex: 1;
+  max-width: 260px;
+}
+
+.filter-group {
+  margin: 0;
+  padding: 16px 0 4px;
+  border: 0;
+}
+
+.filter-group + .filter-group {
+  border-top: 1px solid var(--border);
+}
+
+.filter-group legend {
+  float: left; /* lets the legend sit inside the padding like a heading */
+  width: 100%;
+  margin-bottom: 10px;
+  padding: 0;
+  font-family: var(--font-head);
+  font-size: 1.0625rem;
+  font-weight: 600;
+}
+
+.filter-group > :not(legend) {
+  clear: both;
+}
+
+.filter-note {
+  margin: 8px 0 0;
+  color: var(--text-2);
+  font-size: 0.875rem;
+}
+
+.filter-note:empty {
+  display: none;
+}
+
+.options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.option {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: var(--tap);
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.option-input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+}
+
+.option-label {
+  font-weight: 600;
+  font-size: 0.9375rem;
+}
+
+.option-count {
+  color: var(--text-2);
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.option:has(.option-input:checked) {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-text);
+}
+
+.option:has(.option-input:checked) .option-count {
+  color: inherit;
+  opacity: 0.85;
+}
+
+.option:has(.option-input:disabled) {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.option:has(.option-input:focus-visible) {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.text-input {
+  width: 100%;
+  min-height: var(--tap);
+  margin-top: 10px;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  font-size: 1rem;
+}
+
+.filter-group .chips:not(:empty) {
+  margin-top: 10px;
+}
+
+.filter-group .chip {
+  background: var(--accent);
+  color: var(--accent-text);
+}
+
+.suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.suggestion {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: var(--tap);
+  padding: 0 12px;
+  border: 1px dashed var(--border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 0.9375rem;
+  cursor: pointer;
+}
+
+.suggestion .option-count {
+  margin-left: 4px;
+}
+
+@media (min-width: 700px) {
+  .sheet {
+    inset: 0 0 0 auto;
+    width: 420px;
+    max-height: none;
+    height: 100%;
+    border-radius: 0;
+    box-shadow: -8px 0 32px rgb(0 0 0 / 0.2);
+  }
+
+  .sheet[open] {
+    animation-name: sheet-left;
+  }
+
+  @keyframes sheet-left {
+    from {
+      transform: translateX(24px);
+      opacity: 0.6;
+    }
+  }
+
+  .home-toolbar {
+    margin: 0;
+    padding: 12px 0;
+    border-bottom: 0;
+  }
+
+  .search-row {
+    max-width: 720px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sheet[open] {
+    animation: none;
   }
 }
