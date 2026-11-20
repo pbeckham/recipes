@@ -71,6 +71,24 @@ Favourites, shopping lists, meal plans, offline/PWA, an in-app editor, and impor
 
 ---
 
+## Performance with large collections
+
+The app is designed for 1,000+ recipes (N6):
+- **The list renders in batches** of 48 cards, with more added as you scroll. Cards far off-screen skip layout and painting (`content-visibility: auto`).
+- **The built list is kept** when you open a recipe, so going back is instant and returns to the same card.
+- **Images load lazily.** Search and filters (phase 3) work on the in-memory `index.json`, and a recipe file is only fetched when you open it.
+
+Measured with 1,520 recipes on an emulated Pixel 7 with the CPU slowed 4×, served statically:
+
+| | Result |
+|---|---|
+| `build-index.mjs` | under 1 s |
+| `index.json` | ~1.1 MB raw (nginx `gzip on` cuts it to a few hundred KB for real recipes) |
+| First screen of the list | ~0.4 s, the same as with 19 recipes |
+| Back from a recipe | ~0.5 s, same card in the same place |
+
+Without batching the same list took 3.5 s to appear and 7.8 s to come back to.
+
 ## Repository layout
 
 ```
@@ -84,13 +102,20 @@ site/                   The deployable static app (copy this to the NAS)
     text.js             Text normalization and whole-word term matching (shared with tools/)
     search.js           Index search and filtering
     scale.js            Ingredient quantity parsing and scaling
-    views/              Home, recipe and other views
+    data.js             Loading index.json and recipe files
+    dom.js              Tiny DOM helpers (text only, never innerHTML for recipe data)
+    format.js           Times and nutrition labels
+    views/              Home, recipe and shared view pieces
   recipes/              ← NOT in git. Your recipes plus the generated index.json
 samples/recipes/        CC0 sample recipes used for development, tests and GitHub Pages
 tools/
   build-index.mjs       Scan a recipes folder → write index.json
   dev-server.mjs        Local static server (site/ at /, a chosen recipes folder at /recipes/)
-test/                   node:test unit tests and Playwright end-to-end tests
+  screenshots.mjs       Phone/tablet × light/dark screenshots for reviewing UI changes
+test/
+  unit/                 node:test unit tests
+  e2e/                  Playwright end-to-end tests
+  fixtures/             Deliberately broken/odd recipe files for tests
 deploy/
   nginx.conf.example
   recipes-index.cron.example
@@ -192,20 +217,28 @@ node tools/build-index.mjs samples/recipes --report
 
 Warnings are printed for invalid JSON, files without a Recipe, recipes with no name, ingredients or instructions, missing local images, duplicate ids (`x.json` + `x.jsonld`), and unknown category tags. Broken files are skipped and the rest are still indexed.
 
-The dev server arrives in phase 2:
+Run the app locally with the dev server:
 
 ```bash
-node tools/dev-server.mjs                      # serves samples at http://localhost:8080
+npm install                                    # first time only: Playwright, used by tests and screenshots
+npm run dev                                    # samples at http://localhost:8080/
 node tools/dev-server.mjs --recipes ~/my-recipes
+node tools/dev-server.mjs --base /recipes/     # mimic GitHub Pages' sub-path
+node tools/dev-server.mjs --host 0.0.0.0       # reachable from your phone on the same network
 ```
+
+The dev server rebuilds `recipes/index.json` in memory on every request, so new or edited recipe files show up when you reload. It never writes to your recipes folder.
 
 ### Tests
 
 ```bash
 npm test                     # unit tests (node --test), no dependencies
 npm run index:samples        # build the sample index; fails on any warning
-npx playwright test          # end-to-end tests (from phase 2; dev dependency only)
+npm run e2e                  # end-to-end tests on phone + tablet viewports (Playwright)
+npm run screenshots          # phone/tablet × light/dark screenshots into screenshots/
 ```
+
+Run `npx playwright install chromium` once before the first `npm run e2e` or `npm run screenshots`.
 
 ### Home network deployment (NAS + Raspberry Pi)
 
@@ -222,7 +255,7 @@ npx playwright test          # end-to-end tests (from phase 2; dev dependency on
 
 ### GitHub Pages
 
-Pushing to `main` runs `.github/workflows/pages.yml`. It copies `site/`, copies `samples/recipes/` into `recipes/`, builds the index and deploys. Enable it under **Settings → Pages → Source: GitHub Actions**.
+Pushing to `main` runs `.github/workflows/pages.yml`. It copies `site/`, copies `samples/recipes/` into `recipes/`, builds the index and deploys. Enable it once under **Settings → Pages → Source: GitHub Actions**. You can also run it by hand from the **Actions** tab. The demo is at `https://<user>.github.io/recipes/`.
 
 ---
 
@@ -232,7 +265,7 @@ Pushing to `main` runs `.github/workflows/pages.yml`. It copies `site/`, copies 
 |---|---|---|
 | 0 ✅ | README, CLAUDE.md, repo skeleton, CI | — |
 | 1 ✅ | JSON-LD normalizer, taxonomy and inference, index builder with `--report`, 15–20 CC0 sample recipes, unit tests | R1–R4, R14–R17 |
-| 2 | Mobile-first app shell, hash router, recipe list with badges, recipe view, GitHub Pages deploy | R5, R9, N1–N5 |
+| 2 ✅ | Mobile-first app shell, hash router, recipe list with badges, recipe view, GitHub Pages deploy | R5, R9, N1–N5 |
 | 3 | Search, category filters (bottom sheet), time filter and sort, ingredient filter | R6–R8, R18, R19, N6 |
 | 4 | Cooking helpers: scaler, check-off, wake lock, print | R10–R13 |
 | 5 | NAS deployment: nginx and cron examples, documented end to end | — |

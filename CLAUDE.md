@@ -15,8 +15,9 @@ Guidance for Claude (and humans) working in this repo. The requirements live in 
 ```bash
 npm test                                     # unit tests (node --test, fast, run always)
 npm run index:samples                        # build sample index with --strict --report
-node tools/dev-server.mjs                    # http://localhost:8080 with sample recipes (phase 2+)
-npx playwright test --trace off              # e2e tests (run when UI changes)
+npm run dev                                  # http://localhost:8080 with sample recipes
+npm run e2e -- --trace off                   # e2e tests, phone + tablet (run when UI changes)
+npm run screenshots -- --out <dir>           # phone/tablet × light/dark; exits 1 on console errors or horizontal overflow
 ```
 
 ## Development flow
@@ -28,7 +29,7 @@ npx playwright test --trace off              # e2e tests (run when UI changes)
 4. Verify:
    - `npm test` passes.
    - `npm run index:samples` prints no warnings. Fixtures that are meant to be bad live in `test/fixtures/`, never in `samples/`.
-   - For UI changes, run the dev server and take Playwright screenshots in light and dark mode at:
+   - For UI changes, run `npm run screenshots` (add `--route '#/recipe/<id>'` for specific pages). It captures light and dark mode at:
      - phone 390×844 (primary)
      - tablet portrait 820×1180
      - tablet landscape 1180×820
