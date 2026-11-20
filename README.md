@@ -76,7 +76,7 @@ Favourites, shopping lists, meal plans, offline/PWA, an in-app editor, and impor
 The app is designed for 1,000+ recipes (N6):
 - **The list renders in batches** of 48 cards, with more added as you scroll. Cards far off-screen skip layout and painting (`content-visibility: auto`).
 - **The built list is kept** when you open a recipe, so going back is instant and returns to the same card.
-- **Images load lazily.** Search and filters (phase 3) work on the in-memory `index.json`, and a recipe file is only fetched when you open it.
+- **Images load lazily.** Search and filters work on the in-memory `index.json`, and a recipe file is only fetched when you open it.
 
 Measured with 1,520 recipes on an emulated Pixel 7 with the CPU slowed 4×, served statically:
 
@@ -84,8 +84,9 @@ Measured with 1,520 recipes on an emulated Pixel 7 with the CPU slowed 4×, serv
 |---|---|
 | `build-index.mjs` | under 1 s |
 | `index.json` | ~1.1 MB raw (nginx `gzip on` cuts it to a few hundred KB for real recipes) |
-| First screen of the list | ~0.4 s, the same as with 19 recipes |
-| Back from a recipe | ~0.5 s, same card in the same place |
+| First screen of the list | ~0.55 s, including preparing the search index |
+| Toggling a filter (results, counts and URL updated) | ~60–80 ms |
+| Back from a recipe | ~0.4–0.5 s, same card in the same place |
 
 Without batching the same list took 3.5 s to appear and 7.8 s to come back to.
 
@@ -100,7 +101,7 @@ site/                   The deployable static app (copy this to the NAS)
     jsonld.js           JSON-LD → normalized Recipe (shared with tools/)
     taxonomy.js         Facet values, synonyms and inference rules (shared with tools/)
     text.js             Text normalization and whole-word term matching (shared with tools/)
-    search.js           Index search and filtering
+    search.js           Search, filters, counts, sorting and URL state (pure; unit-tested)
     scale.js            Ingredient quantity parsing and scaling
     data.js             Loading index.json and recipe files
     dom.js              Tiny DOM helpers (text only, never innerHTML for recipe data)
@@ -198,6 +199,17 @@ Inference is a convenience for untagged recipes, such as ones exported from webs
 
 ---
 
+## Searching and filtering
+
+- **Search box:** every word must match the start of a word in the name, description, tags, cuisine, categories or ingredients. Matching ignores case and accents, so "chick ragu" finds "Chicken" and "Ragù". Name matches rank first ("Best match").
+- **Filters** button: on a phone this opens a bottom sheet, on a tablet a side panel.
+  - **Meal, Protein, Carb and Cuisine:** choices within a group mean "or", and different groups mean "and". Each option shows how many recipes you'd get, and options with none are disabled.
+  - **Total time:** ≤ 15 min, ≤ 30 min, ≤ 45 min, ≤ 1 hr or ≤ 1½ hrs. Recipes with no time are hidden while this is set, and the app says how many.
+  - **Must include:** add ingredients, with suggestions as you type. Recipes must contain all of them. Matching is on whole words and allows plurals, so "tomato" finds "tomatoes".
+- **Active filters** appear as chips under the search box. Tap one to remove it.
+- **Sort:** best match (while searching), name, quickest first, or newest first.
+- **Shareable URLs:** everything is kept in the URL, e.g. `#/?q=soup&meal=Main&protein=Poultry&time=60&ing=garlic&sort=time`, so a filtered view can be bookmarked or shared. Opening a recipe and going back keeps the filters and your place in the list.
+
 ## Usage
 
 ### Local development
@@ -266,7 +278,7 @@ Pushing to `main` runs `.github/workflows/pages.yml`. It copies `site/`, copies 
 | 0 ✅ | README, CLAUDE.md, repo skeleton, CI | — |
 | 1 ✅ | JSON-LD normalizer, taxonomy and inference, index builder with `--report`, 15–20 CC0 sample recipes, unit tests | R1–R4, R14–R17 |
 | 2 ✅ | Mobile-first app shell, hash router, recipe list with badges, recipe view, GitHub Pages deploy | R5, R9, N1–N5 |
-| 3 | Search, category filters (bottom sheet), time filter and sort, ingredient filter | R6–R8, R18, R19, N6 |
+| 3 ✅ | Search, category filters (bottom sheet), time filter and sort, ingredient filter | R6–R8, R18, R19, N6 |
 | 4 | Cooking helpers: scaler, check-off, wake lock, print | R10–R13 |
 | 5 | NAS deployment: nginx and cron examples, documented end to end | — |
 | Later | Favourites, shopping list, PWA/offline, validator CLI, import-from-URL CLI, ingredient exclusion, "what can I make?" pantry matching | — |

@@ -1,10 +1,11 @@
 // Entry point: hash router and view switching.
-// Routes:  #/                 → all recipes
+// Routes:  #/                 → all recipes; #/?q=…&meal=… → searched/filtered (R8)
 //          #/recipe/<id>      → one recipe (id = path in the recipes folder, no extension)
 
 import { h, icon } from './dom.js';
 import { loadIndex, loadRecipe, LoadError } from './data.js';
-import { renderHome } from './views/home.js';
+import { createHome } from './views/home.js';
+import { parseState, serializeState } from './search.js';
 import { renderRecipe } from './views/recipe.js';
 import { messageView } from './views/common.js';
 
@@ -22,12 +23,14 @@ let homeAnchor = null;
 let currentRoute = '';
 let cameFromHome = false;
 /** The built list view, reused when returning so "back" is instant and keeps its scroll position. */
-let homeCache = { index: null, node: null };
+let home = null;
 
-/** @returns {{ name: 'home' } | { name: 'recipe', id: string } | { name: 'unknown' }} */
+/** @returns {{ name: 'home', query: string } | { name: 'recipe', id: string } | { name: 'unknown' }} */
 function parseRoute(hash) {
-  const path = hash.replace(/^#\/?/, '');
-  if (path === '') return { name: 'home' };
+  const raw = hash.replace(/^#\/?/, '');
+  const q = raw.indexOf('?');
+  const path = q < 0 ? raw : raw.slice(0, q);
+  if (path === '') return { name: 'home', query: q < 0 ? '' : raw.slice(q + 1) };
   const [first, ...rest] = path.split('/');
   if (first === 'recipe' && rest.length) {
     try {
@@ -39,13 +42,31 @@ function parseRoute(hash) {
   return { name: 'unknown' };
 }
 
-/** Swap the view and move focus to its heading (for screen readers). */
+/**
+ * Swap the view and move focus to its heading (for screen readers).
+ * The home view is hidden rather than removed while another view shows, so
+ * the browser keeps the measured heights of its cards and "back" lands on
+ * exactly the same spot.
+ */
 function show(node, { title, scrollY = 0, focus = true } = {}) {
-  viewEl.replaceChildren(node);
+  for (const child of [...viewEl.children]) {
+    if (child === node) continue;
+    if (child === home?.node) child.hidden = true;
+    else child.remove();
+  }
+  if (node.parentNode !== viewEl) viewEl.append(node);
+  node.hidden = false;
   document.title = title ? `${title} · ${APP_NAME}` : APP_NAME;
   window.scrollTo(0, scrollY);
   if (focus && !firstRender) node.querySelector('h1')?.focus({ preventScroll: true });
   firstRender = false;
+}
+
+/** Replace the visible (non-home) view without moving focus or scroll. */
+function replaceView(node) {
+  const current = [...viewEl.children].find((c) => !c.hidden && c !== home?.node);
+  if (current) current.replaceWith(node);
+  else viewEl.append(node);
 }
 
 function retryButton() {
@@ -108,8 +129,14 @@ async function route() {
   if (stale()) return;
 
   if (r.name === 'home') {
-    if (homeCache.index !== index) homeCache = { index, node: renderHome(index) };
-    show(homeCache.node, { scrollY: returningHome ? homeScrollY : 0 });
+    const state = parseState(r.query);
+    if (home?.index !== index) {
+      home = createHome(index, { onStateChange: updateHomeUrl });
+      home.setState(state);
+    } else if (serializeState(state) !== serializeState(home.state)) {
+      home.setState(state);
+    }
+    show(home.node, { scrollY: returningHome ? homeScrollY : 0 });
     if (returningHome) restoreHomeAnchor();
     return;
   }
@@ -127,51 +154,59 @@ async function route() {
   try {
     const recipe = await loadRecipe(entry);
     if (stale()) return;
-    viewEl.replaceChildren(renderRecipe(entry, recipe));
+    replaceView(renderRecipe(entry, recipe));
   } catch (err) {
     if (stale()) return;
-    viewEl.replaceChildren(renderRecipe(entry, null, { error: err instanceof Error ? err.message : String(err) }));
+    replaceView(renderRecipe(entry, null, { error: err instanceof Error ? err.message : String(err) }));
   }
+}
+
+/** Keep search and filter state in the URL without adding history entries (R8). */
+function updateHomeUrl(state) {
+  const query = serializeState(state);
+  history.replaceState(history.state, '', `#/${query ? `?${query}` : ''}`);
 }
 
 function rememberHomePosition() {
   homeScrollY = window.scrollY;
-  const barBottom = document.querySelector('.app-bar')?.getBoundingClientRect().bottom ?? 0;
+  // Cards hidden under the sticky app bar or search toolbar don't count as visible.
+  const barBottom = Math.max(
+    ...[...document.querySelectorAll('.app-bar, .home-toolbar')].map((el) => el.getBoundingClientRect().bottom),
+    0,
+  );
   const card = [...viewEl.querySelectorAll('.card')].find((c) => c.getBoundingClientRect().bottom > barBottom);
   homeAnchor = card ? { el: card, top: card.getBoundingClientRect().top } : null;
 }
 
 /**
- * Off-screen cards use estimated heights (content-visibility), and they
- * switch to their real heights over the next few frames after the list is
- * reattached. Keep nudging the page until the remembered card is back where
- * it was and has stayed there for a few frames (max ~1s). Stops as soon as
- * the user scrolls themselves.
+ * Off-screen cards use estimated heights (content-visibility) and switch to
+ * their real heights when the browser gets round to measuring them, which
+ * can be several frames later on a slow or busy device. Re-anchor the
+ * remembered card whenever the list changes size, for up to 1.5s, and stop
+ * as soon as the user scrolls or touches the page.
  */
 function restoreHomeAnchor() {
   const anchor = homeAnchor;
-  if (!anchor?.el.isConnected) return;
-  const started = performance.now();
-  let stableFrames = 0;
-  let cancelled = false;
-  const cancel = () => (cancelled = true);
-  const inputs = ['wheel', 'touchstart', 'keydown', 'mousedown'];
-  inputs.forEach((t) => window.addEventListener(t, cancel, { once: true, passive: true }));
-  const done = () => inputs.forEach((t) => window.removeEventListener(t, cancel));
+  const list = home?.node.querySelector('.card-list');
+  if (!anchor?.el.isConnected || !list) return;
 
-  const step = () => {
-    if (cancelled || !anchor.el.isConnected || currentRoute !== 'home') return done();
+  const correct = () => {
+    if (!anchor.el.isConnected || currentRoute !== 'home') return finish();
     const diff = anchor.el.getBoundingClientRect().top - anchor.top;
-    if (Math.abs(diff) >= 1) {
-      window.scrollBy(0, diff);
-      stableFrames = 0;
-    } else {
-      stableFrames += 1;
-    }
-    if (stableFrames >= 5 || performance.now() - started > 1000) return done();
-    requestAnimationFrame(step);
+    if (Math.abs(diff) >= 1) window.scrollBy(0, diff);
   };
-  step();
+  const inputs = ['wheel', 'touchstart', 'keydown', 'mousedown'];
+  const observer = 'ResizeObserver' in window ? new ResizeObserver(correct) : null;
+  const timer = setTimeout(() => finish(), 1500);
+  function finish() {
+    observer?.disconnect();
+    clearTimeout(timer);
+    inputs.forEach((t) => window.removeEventListener(t, finish));
+  }
+  inputs.forEach((t) => window.addEventListener(t, finish, { once: true, passive: true }));
+  correct();
+  observer?.observe(list);
+  requestAnimationFrame(correct);
 }
 
 backEl.prepend(icon('back'));
