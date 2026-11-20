@@ -118,9 +118,12 @@ test/
   unit/                 node:test unit tests
   e2e/                  Playwright end-to-end tests
   fixtures/             Deliberately broken/odd recipe files for tests
+  deploy/               deploy.sh and the nginx config, run in a real nginx
 deploy/
-  nginx.conf.example
-  recipes-index.cron.example
+  README.md             Step-by-step Raspberry Pi guide
+  deploy.sh             Install/update the app on the Pi
+  nginx.conf.example    nginx site (HTTPS, NAS folder mapping, caching, CSP)
+  recipes-index.*       systemd service + timer that rebuild the index
 .github/workflows/
   ci.yml                Tests and index build on every PR
   pages.yml             Deploy site/ + samples to GitHub Pages on push to main
@@ -222,7 +225,7 @@ On a recipe page:
 - **Tick off** an ingredient or step by tapping it, or with Space when using a keyboard. "Clear ticks" resets them.
 - **Servings and ticks last for the browser session.** They survive leaving the recipe and reloading, but not closing the tab.
 - **Keep screen on** stops the phone or tablet from sleeping while the recipe is open (Screen Wake Lock API), and is released when you leave the recipe.
-  - Browsers only offer this on **HTTPS or `localhost`**, so the button is hidden when the app is served over plain HTTP on your LAN. Phase 5 covers enabling HTTPS on the Pi.
+  - Browsers only offer this on **HTTPS or `localhost`**, so the button is hidden when the app is served over plain HTTP on your LAN. See [deploy/README.md](deploy/README.md#5-https-certificate) for HTTPS on the Pi.
 - **Print** gives a clean one-page layout: ingredients beside the method, no buttons, a small image, nothing struck through. If you scaled the recipe, it prints the scaled quantities with a note ("Quantities scaled to 8 servings.").
 
 ## Usage
@@ -241,6 +244,7 @@ node tools/build-index.mjs samples/recipes --report
 | `--strict` | Exit with status 1 if there are any warnings (used in CI) |
 | `--dry-run` | Don't write `index.json` |
 | `--out <file>` | Write the index somewhere other than `<recipes-dir>/index.json` |
+| `--if-changed` | Only write when recipes changed (ignoring the timestamp); used by the Pi's timer |
 
 Warnings are printed for invalid JSON, files without a Recipe, recipes with no name, ingredients or instructions, missing local images, duplicate ids (`x.json` + `x.jsonld`), and unknown category tags. Broken files are skipped and the rest are still indexed.
 
@@ -269,16 +273,17 @@ Run `npx playwright install chromium` once before the first `npm run e2e` or `np
 
 ### Home network deployment (NAS + Raspberry Pi)
 
-1. Copy `site/` to the NAS, e.g. `/volume1/web/recipes/`. When you update the app later, leave your recipes alone:
-   ```bash
-   rsync -av --delete --exclude 'recipes/' site/ nas:/volume1/web/recipes/
-   ```
-2. Put your recipe files in `/volume1/web/recipes/recipes/`. Subfolders are fine.
-3. On the Pi, with the NAS share mounted, rebuild the index after adding recipes, or on a schedule (see `deploy/recipes-index.cron.example`):
-   ```bash
-   node tools/build-index.mjs /mnt/nas/web/recipes/recipes
-   ```
-4. Point nginx at the folder (see `deploy/nginx.conf.example`). Serve `index.json` with `Cache-Control: no-cache` so new recipes appear straight away.
+See **[deploy/README.md](deploy/README.md)** for the step-by-step guide. In short:
+- **The Pi serves the app** from `/var/www/recipes`, copied there by `deploy/deploy.sh`.
+- **Recipes are read directly from the NAS share** mounted on the Pi (`/mnt/chipolata/recipes/processed/`). Nothing is written there.
+- **A systemd timer rebuilds** `/var/lib/recipes/index.json` every 5 minutes, but only rewrites it when recipes changed.
+- **nginx maps `/recipes/…`** onto the NAS folder and the index, with HTTPS, gzip, caching and security headers (`deploy/nginx.conf.example`).
+
+Updating later:
+
+```bash
+cd /opt/recipes && git pull && sudo deploy/deploy.sh
+```
 
 ### GitHub Pages
 
@@ -295,7 +300,7 @@ Pushing to `main` runs `.github/workflows/pages.yml`. It copies `site/`, copies 
 | 2 ✅ | Mobile-first app shell, hash router, recipe list with badges, recipe view, GitHub Pages deploy | R5, R9, N1–N5 |
 | 3 ✅ | Search, category filters (bottom sheet), time filter and sort, ingredient filter | R6–R8, R18, R19, N6 |
 | 4 ✅ | Cooking helpers: scaler, check-off, wake lock, print | R10–R13 |
-| 5 | NAS deployment: nginx and cron examples, documented end to end | — |
+| 5 ✅ | Raspberry Pi deployment: deploy script, nginx config, index timer, HTTPS guide | — |
 | Later | Favourites, shopping list, PWA/offline, validator CLI, import-from-URL CLI, ingredient exclusion, "what can I make?" pantry matching | — |
 
 ## Open questions
