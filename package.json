@@ -8,6 +8,12 @@
   },
   "scripts": {
     "test": "node --test test/unit/*.test.mjs",
-    "index:samples": "node tools/build-index.mjs samples/recipes --strict --report"
+    "index:samples": "node tools/build-index.mjs samples/recipes --strict --report",
+    "e2e": "playwright test",
+    "dev": "node tools/dev-server.mjs",
+    "screenshots": "node tools/screenshots.mjs"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0"
   }
 }

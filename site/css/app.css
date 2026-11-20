@@ -1,0 +1,730 @@
+/* Recipes — mobile-first stylesheet.
+   Base styles target a ~390px phone; min-width queries add tablet layouts (N4). */
+
+/* ------------------------------------------------------------ tokens */
+:root {
+  --bg: #faf7f2;
+  --surface: #ffffff;
+  --surface-2: #f2ede4;
+  --text: #23201c;
+  --text-2: #5e574e;
+  --border: #e3dcd0;
+  --accent: #b4471f;
+  --accent-text: #ffffff;
+  --focus: #1a5fd0;
+  --shadow: 0 1px 2px rgb(60 40 20 / 0.06), 0 2px 8px rgb(60 40 20 / 0.06);
+
+  --meal-bg: #fbecd0;
+  --meal-text: #6e4300;
+  --protein-bg: #f9e0dc;
+  --protein-text: #842619;
+  --carb-bg: #e1efdc;
+  --carb-text: #2c5826;
+
+  --font-body: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-head: ui-serif, 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif;
+  --radius: 14px;
+  --gutter: 16px;
+  --bar-h: 56px;
+  --tap: 44px;
+
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #171513;
+    --surface: #211e1b;
+    --surface-2: #2b2724;
+    --text: #f1ece4;
+    --text-2: #b9b1a6;
+    --border: #3a3530;
+    --accent: #f0875a;
+    --accent-text: #1b1208;
+    --focus: #7fb0ff;
+    --shadow: none;
+
+    --meal-bg: #3a2c12;
+    --meal-text: #f5c97a;
+    --protein-bg: #3d1f1b;
+    --protein-text: #f3a99d;
+    --carb-bg: #1f3220;
+    --carb-text: #a8d8a0;
+  }
+}
+
+/* ------------------------------------------------------------ base */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-head);
+  line-height: 1.2;
+  font-weight: 600;
+  margin: 0;
+}
+
+p {
+  margin: 0;
+}
+
+a {
+  color: var(--accent);
+}
+
+img {
+  display: block;
+  max-width: 100%;
+}
+
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Headings receive focus programmatically after navigation (for screen
+   readers); they aren't interactive, so no focus ring. */
+[tabindex='-1']:focus {
+  outline: none;
+}
+
+.icon {
+  width: 1.25em;
+  height: 1.25em;
+  flex: none;
+}
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.muted {
+  color: var(--text-2);
+}
+
+.small {
+  font-size: 0.875rem;
+}
+
+pre {
+  margin: 0;
+  padding: 12px;
+  background: var(--surface-2);
+  border-radius: 10px;
+  overflow-x: auto;
+  font-size: 0.875rem;
+  overflow-wrap: normal;
+}
+
+.skip-link {
+  position: absolute;
+  left: 8px;
+  top: -100px;
+  z-index: 10;
+  padding: 10px 14px;
+  background: var(--surface);
+  color: var(--text);
+  border-radius: 8px;
+}
+
+.skip-link:focus {
+  top: 8px;
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--tap);
+  padding: 0 20px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-text);
+  font: inherit;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+/* ------------------------------------------------------------ app bar */
+.app-bar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: var(--bg);
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  -webkit-backdrop-filter: saturate(1.4) blur(10px);
+  backdrop-filter: saturate(1.4) blur(10px);
+  border-bottom: 1px solid var(--border);
+  padding-top: env(safe-area-inset-top);
+}
+
+.app-bar-inner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 1200px;
+  height: var(--bar-h);
+  margin: 0 auto;
+  padding: 0 max(var(--gutter), env(safe-area-inset-left)) 0 max(var(--gutter), env(safe-area-inset-right));
+}
+
+.brand {
+  font-family: var(--font-head);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text);
+  text-decoration: none;
+  min-height: var(--tap);
+  display: inline-flex;
+  align-items: center;
+}
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  min-height: var(--tap);
+  padding-right: 8px;
+  margin-left: -8px;
+  color: var(--accent);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.back-link[hidden] {
+  display: none;
+}
+
+/* On a recipe the back link leads; the brand moves to the right. */
+[data-route='recipe'] .brand,
+[data-route='unknown'] .brand {
+  margin-left: auto;
+  font-size: 1rem;
+  color: var(--text-2);
+}
+
+/* ------------------------------------------------------------ page */
+#view {
+  outline: none;
+}
+
+main {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: var(--gutter) max(var(--gutter), env(safe-area-inset-left)) calc(48px + env(safe-area-inset-bottom))
+    max(var(--gutter), env(safe-area-inset-right));
+}
+
+main.loading {
+  color: var(--text-2);
+  padding-top: 48px;
+  text-align: center;
+}
+
+.page-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 4px 0 16px;
+}
+
+.page-head h1 {
+  font-size: 1.75rem;
+}
+
+.page-count {
+  color: var(--text-2);
+  font-size: 0.9375rem;
+  white-space: nowrap;
+}
+
+/* ------------------------------------------------------------ badges */
+.badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.5;
+}
+
+.badge-meal {
+  background: var(--meal-bg);
+  color: var(--meal-text);
+}
+
+.badge-protein {
+  background: var(--protein-bg);
+  color: var(--protein-text);
+}
+
+.badge-carb {
+  background: var(--carb-bg);
+  color: var(--carb-text);
+}
+
+.badge-inferred {
+  background: transparent;
+  border: 1.5px dashed currentColor;
+}
+
+.badge-facet {
+  font-weight: 400;
+  opacity: 0.85;
+  margin-right: 4px;
+}
+
+/* ------------------------------------------------------------ media */
+.media-placeholder {
+  display: grid;
+  place-items: center;
+  background: var(--surface-2);
+  color: var(--text-2);
+}
+
+.media-placeholder .icon {
+  width: 36%;
+  max-width: 72px;
+  height: auto;
+  opacity: 0.55;
+}
+
+/* ------------------------------------------------------------ recipe cards
+   Phone: compact rows (thumbnail + text) so many recipes fit on screen.
+   ≥600px: a grid of vertical cards. */
+.card-list {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.card {
+  display: grid;
+  grid-template-columns: 96px 1fr;
+  gap: 14px;
+  align-items: start;
+  padding: 10px;
+  min-height: 116px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  color: inherit;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 120ms ease, border-color 120ms ease;
+}
+
+.card:active {
+  transform: scale(0.985);
+}
+
+.card-media {
+  width: 96px;
+  height: 96px;
+  border-radius: 10px;
+  object-fit: cover;
+}
+
+.card-body {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  padding-top: 2px;
+}
+
+.card-title {
+  font-size: 1.0625rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.card-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-2);
+  font-size: 0.875rem;
+}
+
+.card-meta .icon {
+  width: 1.1em;
+  height: 1.1em;
+}
+
+@media (hover: hover) {
+  .card:hover {
+    border-color: var(--accent);
+  }
+}
+
+@media (min-width: 600px) {
+  .card-list {
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 16px;
+  }
+
+  .card {
+    grid-template-columns: 1fr;
+    gap: 0;
+    padding: 0;
+    overflow: hidden;
+  }
+
+  .card-media {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 4 / 3;
+    border-radius: 0;
+  }
+
+  .card-body {
+    padding: 12px 14px 16px;
+  }
+}
+
+/* ------------------------------------------------------------ recipe page */
+.recipe {
+  --recipe-size: 1.0625rem;
+  font-size: var(--recipe-size);
+  padding-top: 0;
+}
+
+.recipe-head {
+  display: grid;
+  gap: 16px;
+}
+
+.recipe-head.no-image {
+  padding-top: 12px;
+}
+
+.recipe-head.no-image .recipe-intro {
+  max-width: 48rem;
+}
+
+/* Full-bleed image on phones. */
+.recipe-media {
+  width: calc(100% + 2 * var(--gutter));
+  max-width: none;
+  margin: 0 calc(-1 * var(--gutter));
+  aspect-ratio: 4 / 3;
+  max-height: 46vh;
+  object-fit: cover;
+}
+
+.recipe-intro {
+  display: grid;
+  gap: 12px;
+}
+
+.recipe-intro h1 {
+  font-size: 1.875rem;
+}
+
+.recipe-description {
+  color: var(--text-2);
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 4px 0 0;
+}
+
+.fact {
+  padding: 10px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.fact dt {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-2);
+}
+
+.fact dd {
+  margin: 2px 0 0;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.recipe .loading {
+  margin-top: 32px;
+  color: var(--text-2);
+}
+
+.notice {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin-top: 24px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: var(--protein-bg);
+  color: var(--protein-text);
+}
+
+.recipe-body {
+  display: grid;
+  gap: 32px;
+  margin-top: 32px;
+}
+
+.recipe-body h2 {
+  font-size: 1.375rem;
+  margin-bottom: 12px;
+}
+
+.ingredient-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ingredient-list li {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.ingredient-list li:first-child {
+  border-top: 1px solid var(--border);
+}
+
+.method-section + .method-section {
+  margin-top: 24px;
+}
+
+.method-section h3 {
+  font-size: 1.125rem;
+  margin-bottom: 8px;
+  color: var(--accent);
+}
+
+.step-list {
+  counter-reset: step;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 18px;
+}
+
+.step-list li {
+  counter-increment: step;
+  display: grid;
+  grid-template-columns: 2rem 1fr;
+  gap: 12px;
+}
+
+.step-list li::before {
+  content: counter(step);
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background: var(--surface-2);
+  color: var(--text);
+  font-weight: 700;
+  font-size: 0.9375rem;
+}
+
+.recipe-more {
+  display: grid;
+  gap: 14px;
+  margin-top: 40px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+  font-size: 0.9375rem;
+}
+
+.nutrition summary {
+  min-height: var(--tap);
+  display: flex;
+  align-items: center;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.nutrition dl,
+.recipe-meta {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+}
+
+.nutrition dl div,
+.recipe-meta div {
+  display: grid;
+  grid-template-columns: minmax(6.5rem, auto) 1fr;
+  gap: 12px;
+}
+
+.nutrition dt,
+.recipe-meta dt {
+  color: var(--text-2);
+}
+
+.nutrition dd,
+.recipe-meta dd {
+  margin: 0;
+}
+
+.source-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: var(--tap);
+  font-weight: 600;
+}
+
+/* Tablet portrait and up: rounded image, larger type. */
+@media (min-width: 700px) {
+  .recipe {
+    --recipe-size: 1.125rem;
+    padding-top: var(--gutter);
+  }
+
+  .recipe-media {
+    width: 100%;
+    margin: 0;
+    border-radius: var(--radius);
+    max-height: 420px;
+  }
+
+  .recipe-intro h1 {
+    font-size: 2.25rem;
+  }
+
+  .facts {
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  }
+
+  .recipe-head.no-image {
+    padding-top: 8px;
+  }
+}
+
+/* Wide tablets / landscape: image beside the intro, ingredients beside the method. */
+@media (min-width: 960px) {
+  .recipe-head:not(.no-image) {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+    gap: 32px;
+    align-items: center;
+  }
+
+  .recipe-media {
+    aspect-ratio: 4 / 3;
+    max-height: none;
+  }
+
+  .recipe-body {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 8fr);
+    gap: 48px;
+    align-items: start;
+  }
+
+  .ingredients {
+    position: sticky;
+    top: calc(var(--bar-h) + 16px);
+    max-height: calc(100vh - var(--bar-h) - 32px);
+    overflow-y: auto;
+  }
+}
+
+/* ------------------------------------------------------------ messages */
+.message {
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+  max-width: 34rem;
+  padding-top: 56px;
+  text-align: center;
+}
+
+.message h1 {
+  font-size: 1.625rem;
+}
+
+.message p {
+  color: var(--text-2);
+}
+
+.message pre {
+  text-align: left;
+  max-width: 100%;
+}
+
+.message-icon .icon {
+  width: 56px;
+  height: 56px;
+  color: var(--text-2);
+}
+
+.message-error .message-icon .icon {
+  color: var(--accent);
+}
+
+.noscript {
+  padding: 24px var(--gutter);
+  text-align: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+  }
+}
