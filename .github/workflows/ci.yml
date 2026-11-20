@@ -37,3 +37,7 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - name: End-to-end tests (phone + tablet)
         run: npm run e2e -- --trace off
+      - name: Deployment tests (deploy.sh + nginx config in a real nginx)
+        run: |
+          command -v nginx >/dev/null || (sudo apt-get update -q && sudo apt-get install -y -q nginx-light)
+          npm run test:deploy

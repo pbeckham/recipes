@@ -1,0 +1,15 @@
+# Runs recipes-index.service shortly after boot and then every 5 minutes.
+# --if-changed means the index file is only rewritten when recipes changed,
+# so phones don't re-download it needlessly. (SMB mounts don't deliver file
+# change notifications, so a timer is the reliable option.)
+
+[Unit]
+Description=Rebuild the recipes index every 5 minutes
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=5min
+RandomizedDelaySec=30s
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,101 @@
+# nginx site for the recipes app on a Raspberry Pi.
+#
+# Layout:
+#   /var/www/recipes/                    the app (contents of site/), copied by deploy.sh
+#   /mnt/chipolata/recipes/processed/    your recipe files and images, on the NAS (SMB mount); read-only
+#   /var/lib/recipes/index.json          the recipe index, rebuilt by recipes-index.timer
+#
+# The app always requests recipes/… relative to itself, so nginx maps the
+# /recipes/ URL path onto the NAS folder and recipes/index.json onto the
+# index on the Pi. Nothing is ever written to the NAS.
+#
+# Install:
+#   sudo cp deploy/nginx.conf.example /etc/nginx/sites-available/recipes
+#   sudoedit /etc/nginx/sites-available/recipes        # check the lines marked ←
+#   sudo ln -s /etc/nginx/sites-available/recipes /etc/nginx/sites-enabled/
+#   sudo rm -f /etc/nginx/sites-enabled/default
+#   sudo nginx -t && sudo systemctl reload nginx
+#
+# Plain HTTP only (no certificate yet)? Delete the first server block, change
+# "listen 443 ssl" to "listen 80" (and [::]:80) and remove the ssl_* lines.
+# Everything works except "Keep screen on", which browsers only allow over HTTPS.
+
+# Cache policy by file type (map must sit outside server; this file is
+# included in nginx's http block). The app, recipe JSON and the index have no
+# fingerprints in their names, so browsers revalidate them on every load
+# (cheap 304s) and always see edits. Photos change rarely and are the bulk of
+# the bytes, so they are cached for a day.
+map $uri $recipes_cache_control {
+    default                                 "no-cache";
+    "~*\.(jpe?g|png|webp|avif|gif|svg)$"    "public, max-age=86400";
+}
+
+server {
+    listen 80;
+    listen [::]:80;
+    server_name recipes.local;                              # ← your Pi's name
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    server_name recipes.local;                              # ← your Pi's name
+
+    ssl_certificate     /etc/nginx/ssl/recipes.pem;         # ← see deploy/README.md, HTTPS
+    ssl_certificate_key /etc/nginx/ssl/recipes-key.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_session_cache shared:recipes_ssl:1m;
+
+    root /var/www/recipes;                                  # ← the app
+    index index.html;
+    charset utf-8;
+    autoindex off;
+
+    # Recipe files come from an SMB (CIFS) mount: sendfile and cached file
+    # handles can serve stale or truncated data from network filesystems.
+    sendfile off;
+    open_file_cache off;
+
+    # The index is ~1 MB for 1,500 recipes; JSON compresses very well.
+    gzip on;
+    gzip_vary on;
+    gzip_min_length 1024;
+    gzip_comp_level 5;
+    gzip_types application/json application/ld+json text/css application/javascript text/javascript image/svg+xml;
+
+    # Must match CSP in tools/dev-server.mjs (a test checks this).
+    add_header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' https: data:; connect-src 'self'; font-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header Referrer-Policy "no-referrer" always;
+    add_header Cache-Control $recipes_cache_control always;
+
+    # Hidden files are never served.  (Only GET/HEAD are allowed anywhere:
+    # see limit_except in each location.)
+    location ~ /\. {
+        return 404;
+    }
+
+    # The index, built on the Pi (exact match beats the /recipes/ prefix).
+    location = /recipes/index.json {
+        alias /var/lib/recipes/index.json;                  # ← must match recipes-index.service
+        limit_except GET HEAD { deny all; }
+    }
+
+    # Recipe files and images from the NAS.
+    location /recipes/ {
+        alias /mnt/chipolata/recipes/processed/;            # ← your recipes folder (keep the trailing /)
+        limit_except GET HEAD { deny all; }
+
+        location ~* \.jsonld$ {
+            types { }
+            default_type application/ld+json;
+            limit_except GET HEAD { deny all; }
+        }
+    }
+
+    location / {
+        try_files $uri $uri/ =404;
+        limit_except GET HEAD { deny all; }
+    }
+}

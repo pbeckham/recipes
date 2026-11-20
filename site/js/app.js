@@ -6,10 +6,12 @@ import { h, icon } from './dom.js';
 import { loadIndex, loadRecipe, LoadError } from './data.js';
 import { createHome } from './views/home.js';
 import { parseState, serializeState } from './search.js';
+import { createWakeLock } from './cooking.js';
 import { renderRecipe } from './views/recipe.js';
 import { messageView } from './views/common.js';
 
 const APP_NAME = 'Recipes';
+const wakeLock = createWakeLock();
 const viewEl = /** @type {HTMLElement} */ (document.getElementById('view'));
 const backEl = /** @type {HTMLAnchorElement} */ (document.getElementById('back'));
 
@@ -111,6 +113,8 @@ async function route() {
   const returningHome = r.name === 'home' && currentRoute !== 'home' && currentRoute !== '';
   cameFromHome = currentRoute === 'home' && r.name === 'recipe';
   currentRoute = r.name;
+  // The screen only needs to stay on while a recipe is open (R12).
+  if (r.name !== 'recipe') wakeLock?.set(false);
   backEl.hidden = r.name === 'home';
   document.documentElement.dataset.route = r.name;
 
@@ -154,7 +158,7 @@ async function route() {
   try {
     const recipe = await loadRecipe(entry);
     if (stale()) return;
-    replaceView(renderRecipe(entry, recipe));
+    replaceView(renderRecipe(entry, recipe, { wakeLock }));
   } catch (err) {
     if (stale()) return;
     replaceView(renderRecipe(entry, null, { error: err instanceof Error ? err.message : String(err) }));

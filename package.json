@@ -11,7 +11,8 @@
     "index:samples": "node tools/build-index.mjs samples/recipes --strict --report",
     "e2e": "playwright test",
     "dev": "node tools/dev-server.mjs",
-    "screenshots": "node tools/screenshots.mjs"
+    "screenshots": "node tools/screenshots.mjs",
+    "test:deploy": "node --test test/deploy/*.test.mjs"
   },
   "devDependencies": {
     "@playwright/test": "1.63.0"

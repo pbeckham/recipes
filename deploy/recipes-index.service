@@ -1,0 +1,26 @@
+# Rebuilds the recipe index from the recipes folder on the NAS.
+# Install (with recipes-index.timer):
+#   sudo cp deploy/recipes-index.service deploy/recipes-index.timer /etc/systemd/system/
+#   sudoedit /etc/systemd/system/recipes-index.service      # check the lines marked ←
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now recipes-index.timer
+# Check:  systemctl list-timers recipes-index   ·   journalctl -u recipes-index
+
+[Unit]
+Description=Rebuild the recipes index
+After=network-online.target remote-fs.target
+Wants=network-online.target
+RequiresMountsFor=/mnt/chipolata/recipes/processed
+
+[Service]
+Type=oneshot
+# Any user that can read the recipes folder. ← (e.g. your login user)
+User=pi
+# Creates /var/lib/recipes owned by that user; nginx (www-data) can read it.
+StateDirectory=recipes
+StateDirectoryMode=0755
+# /opt/recipes is a checkout of this repository on the Pi. ← paths
+ExecStart=/usr/bin/node /opt/recipes/tools/build-index.mjs /mnt/chipolata/recipes/processed --out /var/lib/recipes/index.json --if-changed
+UMask=0022
+Nice=10
+IOSchedulingClass=idle
