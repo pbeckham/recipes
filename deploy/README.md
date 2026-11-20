@@ -17,7 +17,8 @@ Files in this folder:
 | File | What it is |
 |---|---|
 | `deploy.sh` | Copies the app to `/var/www/recipes` and rebuilds the index. Run it for the first install and after every update. |
-| `nginx.conf.example` | nginx site: HTTPS, the folder mapping above, gzip, caching and security headers. |
+| `nginx.conf.example` | A dedicated nginx site for the app: HTTPS, the folder mapping above, gzip, caching and security headers. |
+| `nginx-cookbook-http.conf`, `nginx-cookbook-locations.conf` | Or: the same app at `/cookbook/` inside an nginx site you already have (step 6, option A). |
 | `recipes-index.service`, `recipes-index.timer` | Rebuild the index from the recipes folder every 5 minutes. The file is only rewritten when recipes changed. |
 
 The commands below use `pi` as the Pi user and `recipes.local` as the address. Replace `pi` with your login name. For
@@ -34,8 +35,34 @@ ls /mnt/chipolata/recipes/processed | head
 node --version
 ```
 
-Node needs to be **20 or newer**. Raspberry Pi OS "Trixie" ships Node 20 (`sudo apt install nodejs`). On older
-releases, install Node 20 or later from NodeSource.
+Node needs to be **20 or newer**. Raspberry Pi OS "Trixie" ships Node 20 (`sudo apt install nodejs`). Otherwise
+install the official build from nodejs.org. That's also the only option on **32-bit Raspberry Pi OS** (`armhf`),
+which NodeSource doesn't support. Node 22 is the last line with 32-bit ARM (`armv7l`) builds, supported until
+April 2027. Install it into `/usr/local`:
+
+```bash
+uname -m      # armv7l or aarch64: fine. armv6l (Pi Zero / Pi 1): see below.
+```
+
+> **Pi Zero / Pi 1 (`armv6l`):** nodejs.org has no builds for this chip. On Raspberry Pi OS Trixie, use
+> `sudo apt install nodejs` (Node 20, built for ARMv6) and skip the download below. On Bookworm, `apt` gives
+> Node 18: run `node /opt/recipes/tools/build-index.mjs /mnt/chipolata/recipes/processed --dry-run --report` to
+> check that it works before relying on it.
+
+```bash
+cd /tmp && V=$(curl -fsSL https://nodejs.org/dist/latest-v22.x/SHASUMS256.txt | grep -o 'node-v22[^ ]*-linux-armv7l\.tar\.xz' | head -1) && echo "$V"
+```
+
+```bash
+curl -fsSLO "https://nodejs.org/dist/latest-v22.x/$V" && curl -fsSL https://nodejs.org/dist/latest-v22.x/SHASUMS256.txt | grep " $V\$" | sha256sum -c -
+```
+
+```bash
+sudo tar -xJf "/tmp/$V" -C /usr/local --strip-components=1 --exclude CHANGELOG.md --exclude LICENSE --exclude README.md && /usr/local/bin/node --version
+```
+
+On a 64-bit OS, replace `armv7l` with `arm64` in the first command. Node then lives at `/usr/local/bin/node`. Use
+that path in `recipes-index.service` (step 3).
 
 nginx runs as the `www-data` user, and it must be able to read the recipes folder:
 
@@ -58,8 +85,9 @@ sudo git clone https://github.com/pbeckham/recipes.git /opt/recipes && sudo chow
 
 ## 3. Index timer
 
-Edit `User=` in the service if your user isn't `pi`. The index is written to `/var/lib/recipes`, which systemd
-creates.
+Edit `User=` in the service if your user isn't `pi`, and the `node` path in `ExecStart=` if Node isn't at
+`/usr/bin/node` (`command -v node` shows where it is; `/usr/local/bin/node` if you installed it from nodejs.org).
+The index is written to `/var/lib/recipes`, which systemd creates.
 
 ```bash
 sudo cp /opt/recipes/deploy/recipes-index.service /opt/recipes/deploy/recipes-index.timer /etc/systemd/system/
@@ -122,6 +150,40 @@ challenge means nothing is exposed to the internet, and phones need no setup. Po
 
 ## 6. nginx
 
+**Does this Pi's nginx already serve other things?** Check with `ls /etc/nginx/sites-enabled/` and look inside the
+files listed there. If your `default` site has your own `location` blocks (other apps, other pages), **don't replace
+it**. Use option A to add the app at `/cookbook/` alongside them. Option B gives the app a site of its own.
+
+### Option A: add the app at `/cookbook/` to your existing site
+
+This adds two small include files; the only change to your existing config is one `include` line.
+
+```bash
+sudo cp /opt/recipes/deploy/nginx-cookbook-http.conf /etc/nginx/conf.d/cookbook.conf && sudo cp /opt/recipes/deploy/nginx-cookbook-locations.conf /etc/nginx/snippets/cookbook.conf
+```
+
+Find the file your enabled `default` site really is, and back it up:
+
+```bash
+F=$(readlink -f /etc/nginx/sites-enabled/default) && echo "$F" && sudo cp "$F" "$F.bak"
+```
+
+Add the include line after `server_name _;` (the first occurrence only):
+
+```bash
+sudo sed -i '0,/^[[:space:]]*server_name _;/s//&\n\tinclude snippets\/cookbook.conf;/' "$F" && grep -n 'cookbook' "$F"
+```
+
+```bash
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+The app is at `http://<pi-name>.local/cookbook/`. If `nginx -t` fails, restore the backup with
+`sudo cp "$F.bak" "$F"`. Recipe folder paths are in `/etc/nginx/snippets/cookbook.conf` (lines marked `←`). For
+HTTPS with this option, enable SSL in your existing server block (see step 5); the snippet works unchanged.
+
+### Option B: a dedicated site for the app
+
 ```bash
 sudo cp /opt/recipes/deploy/nginx.conf.example /etc/nginx/sites-available/recipes
 ```
@@ -157,6 +219,7 @@ Open `https://recipes.local/` on your phone. Add it to the home screen for one-t
 | "Keep screen on" button missing | The site is on plain HTTP, or the device doesn't trust the certificate. |
 | New recipe not showing | `systemctl list-timers recipes-index`, then `sudo systemctl start recipes-index`. |
 | nginx won't start | `sudo nginx -t` names the bad line. |
+| `recipes-index` fails with "Unable to locate executable … build-index.mjs: Permission denied" | The Node path is missing from `ExecStart=`. It must start with the full path to `node`. |
 
 The repository's tests run `deploy.sh` and this exact nginx config, with only paths, ports and certificate
 swapped, in a real nginx. They check the headers, caching, gzip and blocked paths, and load the app in a browser

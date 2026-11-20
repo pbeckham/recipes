@@ -224,3 +224,140 @@ ${site}
     }
   });
 });
+
+test('cookbook snippets add the app at /cookbook/ to an existing site without disturbing it', { skip: !hasNginx && 'nginx not installed' }, async (t) => {
+  // Mirrors the Pi: a default site serving /var/www/html, /garden and an older
+  // /recipes page from the NAS mount, plus one include line for the app.
+  const nas = path.join(tmp, 'shared', 'chipolata');
+  const processed = path.join(nas, 'recipes', 'processed');
+  const www = path.join(tmp, 'shared', 'www-recipes');
+  const html = path.join(tmp, 'shared', 'html');
+  const state = path.join(tmp, 'shared', 'state');
+  const prefix = path.join(tmp, 'shared', 'nginx');
+  for (const d of [processed, path.join(nas, 'garden'), html, state, path.join(prefix, 'snippets'), path.join(prefix, 'conf.d')]) {
+    await mkdir(d, { recursive: true });
+  }
+  await writeFile(path.join(html, 'index.html'), 'default page');
+  await writeFile(path.join(nas, 'garden', 'edinburgh_garden_planner.html'), 'garden planner');
+  await writeFile(path.join(nas, 'recipes', 'recipe_book.html'), 'old recipe book');
+  await cp(path.join(root, 'samples/recipes'), processed, { recursive: true });
+  await rm(path.join(processed, 'index.json'), { force: true });
+  await writeFile(path.join(processed, '.hidden.jpg'), 'secret');
+  assert.equal(deploy(www).status, 0);
+  execFileSync(process.execPath, [path.join(root, 'tools/build-index.mjs'), processed, '--out', path.join(state, 'index.json')]);
+  execFileSync('chmod', ['-R', 'a+rX', tmp]);
+
+  let locations = await readFile(path.join(root, 'deploy/nginx-cookbook-locations.conf'), 'utf8');
+  for (const [from, to] of [
+    ['alias /var/www/recipes/;', `alias ${www}/;`],
+    ['alias /var/lib/recipes/index.json;', `alias ${state}/index.json;`],
+    ['alias /mnt/chipolata/recipes/processed/;', `alias ${processed}/;`],
+  ]) {
+    assert.ok(locations.includes(from), `snippet contains: ${from}`);
+    locations = locations.replaceAll(from, to);
+  }
+  await writeFile(path.join(prefix, 'snippets', 'cookbook.conf'), locations);
+  await cp(path.join(root, 'deploy/nginx-cookbook-http.conf'), path.join(prefix, 'conf.d', 'cookbook.conf'));
+
+  const port = 19080 + Math.floor(Math.random() * 500);
+  const mime = ['/etc/nginx/mime.types', '/usr/local/etc/nginx/mime.types'].find((p) => spawnSync('test', ['-f', p]).status === 0);
+  await writeFile(
+    path.join(prefix, 'nginx.conf'),
+    `pid ${prefix}/nginx.pid;
+error_log ${prefix}/error.log warn;
+events {}
+http {
+  include ${mime};
+  default_type application/octet-stream;
+  access_log off;
+  client_body_temp_path ${prefix}/b; proxy_temp_path ${prefix}/p; fastcgi_temp_path ${prefix}/f; uwsgi_temp_path ${prefix}/u; scgi_temp_path ${prefix}/s;
+  include ${prefix}/conf.d/*.conf;
+  server {
+    listen ${port} default_server;
+    root ${html};
+    index index.html index.htm index.nginx-debian.html;
+    server_name _;
+    include ${prefix}/snippets/cookbook.conf;
+    location / { try_files $uri $uri/ =404; }
+    location /recipes { root ${nas}/; index recipe_book.html; }
+    location /garden { root ${nas}/; index edinburgh_garden_planner.html; }
+  }
+}`,
+  );
+  const check = spawnSync('nginx', ['-t', '-p', prefix, '-c', path.join(prefix, 'nginx.conf')], { encoding: 'utf8' });
+  assert.equal(check.status, 0, check.stderr);
+  const server = spawn('nginx', ['-p', prefix, '-c', path.join(prefix, 'nginx.conf'), '-g', 'daemon off;'], { stdio: 'ignore' });
+  t.after(() => server.kill());
+  const base = `http://localhost:${port}`;
+  for (let i = 0; i < 50; i++) {
+    try {
+      await request(`${base}/`);
+      break;
+    } catch {
+      await new Promise((r) => setTimeout(r, 100));
+    }
+  }
+
+  await t.test('existing site is unchanged', async () => {
+    assert.equal((await request(`${base}/`)).body.toString(), 'default page');
+    assert.equal((await request(`${base}/garden/`)).body.toString(), 'garden planner');
+    assert.equal((await request(`${base}/recipes/`)).body.toString(), 'old recipe book');
+    assert.equal((await request(`${base}/garden/`)).headers['content-security-policy'], undefined, 'no headers leak into other paths');
+  });
+
+  await t.test('app, index, recipes and images under /cookbook/', async () => {
+    const redirect = await request(`${base}/cookbook`);
+    assert.equal(redirect.status, 301);
+    assert.match(redirect.headers.location, /\/cookbook\/$/);
+    const app = await request(`${base}/cookbook/`);
+    assert.equal(app.status, 200);
+    assert.match(app.body.toString(), /<title>Recipes<\/title>/);
+    assert.equal(app.headers['content-security-policy'], CSP);
+    assert.equal(app.headers['cache-control'], 'no-cache');
+    const index = await request(`${base}/cookbook/recipes/index.json`, { headers: { 'Accept-Encoding': 'gzip' } });
+    assert.equal(index.status, 200);
+    assert.equal(index.headers['content-encoding'], 'gzip');
+    assert.equal(index.headers['content-security-policy'], CSP);
+    const json = await request(`${base}/cookbook/recipes/mains/slow-cooked-beef-ragu.json`);
+    assert.equal(json.status, 200);
+    assert.equal(json.headers['cache-control'], 'no-cache');
+    const ld = await request(`${base}/cookbook/recipes/drinks/ginger-lemonade.jsonld`);
+    assert.match(ld.headers['content-type'], /application\/ld\+json/);
+    const img = await request(`${base}/cookbook/recipes/breakfast/shakshuka.svg`);
+    assert.equal(img.status, 200);
+    assert.equal(img.headers['cache-control'], 'public, max-age=86400');
+    assert.equal(img.headers['content-security-policy'], CSP);
+  });
+
+  await t.test('blocked under /cookbook/: hidden files, listings, writes', async () => {
+    assert.equal((await request(`${base}/cookbook/recipes/.hidden.jpg`)).status, 404);
+    assert.notEqual((await request(`${base}/cookbook/recipes/`)).status, 200);
+    assert.equal((await request(`${base}/cookbook/`, { method: 'POST' })).status, 403);
+    assert.equal((await request(`${base}/cookbook/recipes/drinks/ginger-lemonade.jsonld`, { method: 'PUT' })).status, 403);
+  });
+
+  await t.test('the app runs under /cookbook/ in a browser', async (st) => {
+    let chromium;
+    try {
+      ({ chromium } = await import('@playwright/test'));
+    } catch {
+      return st.skip('Playwright not installed');
+    }
+    const browser = await chromium.launch();
+    try {
+      const page = await browser.newPage();
+      const errors = [];
+      page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
+      page.on('pageerror', (e) => errors.push(e.message));
+      await page.goto(`${base}/cookbook/#/?q=soup`);
+      await page.waitForSelector('.card');
+      assert.ok((await page.locator('.card').count()) >= 2);
+      await page.goto(`${base}/cookbook/#/recipe/soups/roast-tomato-soup`);
+      await page.waitForSelector('.ingredient-list');
+      assert.ok(await page.locator('img.recipe-media').evaluate((el) => el.naturalWidth > 0));
+      assert.deepEqual(errors, []);
+    } finally {
+      await browser.close();
+    }
+  });
+});
