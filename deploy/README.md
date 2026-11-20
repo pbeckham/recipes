@@ -40,8 +40,13 @@ which NodeSource doesn't support. Node 22 is the last line with 32-bit ARM (`arm
 April 2027. Install it into `/usr/local`:
 
 ```bash
-uname -m      # armv7l or aarch64: fine. armv6l (Pi Zero / Pi 1): not supported by these builds.
+uname -m      # armv7l or aarch64: fine. armv6l (Pi Zero / Pi 1): see below.
 ```
+
+> **Pi Zero / Pi 1 (`armv6l`):** nodejs.org has no builds for this chip. On Raspberry Pi OS Trixie, use
+> `sudo apt install nodejs` (Node 20, built for ARMv6) and skip the download below. On Bookworm, `apt` gives
+> Node 18: run `node /opt/recipes/tools/build-index.mjs /mnt/chipolata/recipes/processed --dry-run --report` to
+> check that it works before relying on it.
 
 ```bash
 cd /tmp && V=$(curl -fsSL https://nodejs.org/dist/latest-v22.x/SHASUMS256.txt | grep -o 'node-v22[^ ]*-linux-armv7l\.tar\.xz' | head -1) && echo "$V"
