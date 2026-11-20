@@ -32,7 +32,7 @@ It runs in two places:
 - R14. Every recipe has three category facets: **Meal**, **Protein** and **Carb**. Each facet can hold several values (surf and turf is both *Beef* and *Fish & Seafood*).
 - R15. Explicit values come from the file:
   - Meal from `recipeCategory`, mapped through a synonym list (e.g. "Main course", "Dinner" and "Entrée" all become *Main*), or from a `meal:` keyword.
-  - Protein and carb from `protein:` and `carb:` keywords, e.g. `"keywords": "protein:Chicken, carb:Rice, weeknight"`.
+  - Protein and carb from `protein:` and `carb:` keywords, e.g. `"keywords": "protein:Poultry, carb:Rice, weeknight"`. Common synonyms are accepted too, so `protein:Chicken` or `protein:Duck` resolve to *Poultry*.
   
   Matching is case-insensitive and also uses the synonym list.
 - R16. When a recipe has no explicit value for a facet, the index script infers it: protein and carb from the ingredients, meal from the recipe name and keywords. Inferred values are marked as inferred in the index. Explicit values always win, per facet.
@@ -41,7 +41,7 @@ It runs in two places:
 **Browse, search & filter** (Phase 3)
 - R5. A home view lists recipes as cards showing image, name, total time and Meal/Protein/Carb badges.
 - R6. Full-text search over name, description, keywords and ingredients. It is case- and accent-insensitive and runs entirely in the browser.
-- R7. **Category filters** for Meal, Protein and Carb, plus cuisine (`recipeCuisine`). Values within one facet combine with OR (Chicken *or* Pork); different facets combine with AND (Main *and* Rice). Each option shows how many recipes match, and options with no matches are disabled.
+- R7. **Category filters** for Meal, Protein and Carb, plus cuisine (`recipeCuisine`). Values within one facet combine with OR (Poultry *or* Pork); different facets combine with AND (Main *and* Rice). Each option shows how many recipes match, and options with no matches are disabled.
 - R18. **Cooking time filter**: presets of ≤ 15, ≤ 30, ≤ 45, ≤ 60 and ≤ 90 minutes on total time. While a time filter is active, recipes with no known time are hidden and the app says how many were hidden. The list can be sorted by name, by total time, or by newest.
 - R19. **Ingredient filter, must include**: choose one or more ingredients and only recipes containing *all* of them are shown. Matching is on whole words, case- and accent-insensitive, with simple plurals (`tomato` matches "2 tomatoes, diced"). As you type, the app suggests ingredients from a vocabulary built from the index.
 - R8. Search, filter and sort state lives in the URL, so a filtered view can be bookmarked or shared.
@@ -107,7 +107,7 @@ The facet values are fixed and defined in `site/js/taxonomy.js`:
 | Facet | Values | Explicit source |
 |---|---|---|
 | **Meal** | Breakfast, Starter, Soup, Salad, Main, Side, Dessert, Baking, Snack, Sauce & Condiment, Drink | `recipeCategory` (via synonyms) or `meal:` keyword |
-| **Protein** | Fish & Seafood, Chicken, Beef, Pork, Lamb, Vegetarian, Other | `protein:` keyword |
+| **Protein** | Fish & Seafood, Poultry, Beef, Pork, Lamb, Vegetarian, Other | `protein:` keyword |
 | **Carb** | Bread, Pasta, Noodles, Rice, Grains, Potato, None / Other | `carb:` keyword |
 
 **Tagging example**
@@ -118,15 +118,15 @@ The facet values are fixed and defined in `site/js/taxonomy.js`:
   "@type": "Recipe",
   "name": "Chicken & Chorizo Rice",
   "recipeCategory": "Main course",
-  "keywords": "protein:Chicken, protein:Pork, carb:Rice, one-pot, weeknight"
+  "keywords": "protein:Poultry, protein:Pork, carb:Rice, one-pot, weeknight"
 }
 ```
 
 **How values are inferred when a facet has no tags (R16)**
-- **Protein:** look for main-ingredient terms in the ingredient lines, e.g. "chicken thighs" → Chicken, "prawns" → Fish & Seafood.
+- **Protein:** look for main-ingredient terms in the ingredient lines, e.g. "chicken thighs" or "duck breast" → Poultry, "prawns" → Fish & Seafood.
   - Flavourings such as fish sauce, anchovy paste, oyster sauce and stock add no protein.
   - They do rule out *Vegetarian*: a recipe is inferred Vegetarian only if no meat or fish term appears anywhere, including stock, gelatine and anchovies.
-  - Turkey, duck, game and so on map to *Other*.
+  - Poultry covers chicken, turkey, duck, goose and similar birds. Other meats (venison, rabbit, goat, game) map to *Other*.
 - **Carb:** match terms such as spaghetti or penne → Pasta, rice or risotto → Rice, potato or gnocchi → Potato, couscous, quinoa or bulgur → Grains, tortilla, naan or bread → Bread. Breadcrumbs and flour don't count. Anything else is *None / Other*.
 - **Meal:** words in the name or keywords, e.g. "soup" or "chowder" → Soup, "cake", "loaf" or "muffin" → Baking. If nothing matches, the recipe is *Uncategorised*.
 
@@ -220,7 +220,6 @@ Pushing to `main` runs `.github/workflows/pages.yml`. It copies `site/`, copies 
 
 ## Open questions
 - Units: show recipes as written, or add metric/imperial conversion? (Currently: as written.)
-- Protein: should Turkey/Duck get their own value, or should Chicken become "Poultry"? (Currently: *Other*.)
 - License for the app code (sample recipes are CC0).
 
 ## Licence
