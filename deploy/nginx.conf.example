@@ -1,0 +1,81 @@
+# nginx site for the recipes app on a Raspberry Pi.
+# Copy to /etc/nginx/sites-available/recipes, adjust the marked lines, then:
+#   sudo ln -s /etc/nginx/sites-available/recipes /etc/nginx/sites-enabled/
+#   sudo rm -f /etc/nginx/sites-enabled/default
+#   sudo nginx -t && sudo systemctl reload nginx
+#
+# Layout (the NAS share is mounted on the Pi over SMB, see fstab.example):
+#   /mnt/nas/recipes/            the app: contents of site/, copied by deploy.sh
+#   /mnt/nas/recipes/recipes/    your recipe files, images and index.json
+#
+# Plain HTTP only (no certificate)? Delete the first server block, change
+# "listen 443 ssl" to "listen 80" and remove the ssl_* lines. Everything
+# works except "Keep screen on", which browsers only allow over HTTPS.
+
+# Cache policy by file type (map must sit outside server; this file is
+# included in nginx's http block). App files and recipe JSON have no
+# fingerprints in their names, so browsers revalidate them on every load
+# (cheap 304s via ETag/Last-Modified) and always see edits. Photos rarely
+# change and are the bulk of the bytes, so they are cached for a day.
+map $uri $recipes_cache_control {
+    default                                 "no-cache";
+    "~*\.(jpe?g|png|webp|avif|gif|svg)$"    "public, max-age=86400";
+}
+
+server {
+    listen 80;
+    listen [::]:80;
+    server_name recipes.local;                       # ← your hostname
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
+    server_name recipes.local;                       # ← your hostname
+
+    ssl_certificate     /etc/nginx/ssl/recipes.pem;      # ← see README "HTTPS"
+    ssl_certificate_key /etc/nginx/ssl/recipes-key.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_session_cache shared:recipes_ssl:1m;
+
+    root /mnt/nas/recipes;                           # ← the web folder on the SMB mount
+    index index.html;
+    charset utf-8;
+    autoindex off;
+
+    # Files live on an SMB (CIFS) mount: sendfile and cached file handles can
+    # serve stale or truncated data from network filesystems.
+    sendfile off;
+    open_file_cache off;
+
+    # index.json is ~1 MB for 1,500 recipes; JSON compresses very well.
+    gzip on;
+    gzip_vary on;
+    gzip_min_length 1024;
+    gzip_comp_level 5;
+    gzip_types application/json application/ld+json text/css application/javascript text/javascript image/svg+xml;
+
+    # Must match CSP in tools/dev-server.mjs (a unit test checks this).
+    add_header Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' https: data:; connect-src 'self'; font-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header Referrer-Policy "no-referrer" always;
+    add_header Cache-Control $recipes_cache_control always;
+
+    # Hidden files (including index.json's temporary file while it is
+    # being rewritten) are never served.
+    location ~ /\. {
+        return 404;
+    }
+
+    location ~* \.jsonld$ {
+        types { }
+        default_type application/ld+json;
+        limit_except GET HEAD { deny all; }
+    }
+
+    location / {
+        try_files $uri $uri/ =404;
+        limit_except GET HEAD { deny all; }
+    }
+}

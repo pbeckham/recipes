@@ -2,7 +2,7 @@
 // Scan a folder of schema.org Recipe JSON-LD files and write index.json.
 // Node >= 20, built-in modules only. Run with --help for usage.
 
-import { readdir, readFile, stat, writeFile } from 'node:fs/promises';
+import { readdir, readFile, stat, writeFile, rename, rm } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
@@ -22,6 +22,8 @@ files and writes <recipes-dir>/index.json.
 Options:
   --out <file>   Write the index somewhere else
   --dry-run      Don't write anything
+  --if-changed   Only write when the recipes changed (ignores the timestamp),
+                 so a timer can run this often without clients re-downloading
   --report       Print facet counts and recipes with inferred/uncategorised facets
   --strict       Exit with status 1 if there are any warnings (for CI)
   -h, --help     Show this help`;
@@ -185,6 +187,42 @@ export function formatReport(index, skipped) {
   return lines.join('\n');
 }
 
+/** Parsed existing index, or null. */
+async function readExisting(file) {
+  try {
+    return JSON.parse(await readFile(file, 'utf8'));
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Same content apart from the generation timestamp?
+ * @param {any} a @param {any} b
+ */
+export function sameIndex(a, b) {
+  if (!a || !b) return false;
+  const strip = ({ generated, ...rest }) => JSON.stringify(rest);
+  return strip(a) === strip(b);
+}
+
+/**
+ * Write via a temporary file and rename, so readers (nginx, possibly over
+ * SMB) never see a half-written index.
+ * @param {string} file
+ * @param {string} content
+ */
+export async function writeAtomic(file, content) {
+  const tmp = path.join(path.dirname(file), `.${path.basename(file)}.${process.pid}.tmp`);
+  try {
+    await writeFile(tmp, content);
+    await rename(tmp, file);
+  } catch (e) {
+    await rm(tmp, { force: true });
+    throw e;
+  }
+}
+
 async function main(argv) {
   let args;
   try {
@@ -194,6 +232,7 @@ async function main(argv) {
       options: {
         out: { type: 'string' },
         'dry-run': { type: 'boolean' },
+        'if-changed': { type: 'boolean' },
         report: { type: 'boolean' },
         strict: { type: 'boolean' },
         help: { type: 'boolean', short: 'h' },
@@ -224,8 +263,12 @@ async function main(argv) {
 
   if (!values['dry-run']) {
     const out = values.out ? path.resolve(values.out) : path.join(dir, 'index.json');
-    await writeFile(out, `${JSON.stringify(index)}\n`);
-    console.log(`Wrote ${out} (${index.recipes.length} recipes, ${warnings.length} warnings)`);
+    if (values['if-changed'] && sameIndex(await readExisting(out), index)) {
+      console.log(`Unchanged: ${out} (${index.recipes.length} recipes, ${warnings.length} warnings)`);
+    } else {
+      await writeAtomic(out, `${JSON.stringify(index)}\n`);
+      console.log(`Wrote ${out} (${index.recipes.length} recipes, ${warnings.length} warnings)`);
+    }
   } else {
     console.log(`Dry run: ${index.recipes.length} recipes, ${warnings.length} warnings`);
   }

@@ -22,6 +22,25 @@ Options:
   --base <path>    URL base path, e.g. /recipes/ to mimic GitHub Pages (default: /)
   -h, --help       Show this help`;
 
+/**
+ * Content-Security-Policy for the app. deploy/nginx.conf.example sends the
+ * same header (a unit test keeps them in sync), and serving it here means
+ * every e2e test also checks the app works under it.
+ * Remote images are allowed over https only (recipes may reference them).
+ */
+export const CSP = [
+  "default-src 'self'",
+  "script-src 'self'",
+  "style-src 'self'",
+  "img-src 'self' https: data:",
+  "connect-src 'self'",
+  "font-src 'self'",
+  "object-src 'none'",
+  "base-uri 'none'",
+  "form-action 'none'",
+  "frame-ancestors 'none'",
+].join('; ');
+
 const TYPES = {
   '.html': 'text/html; charset=utf-8',
   '.css': 'text/css; charset=utf-8',
@@ -57,7 +76,13 @@ function safeJoin(root, urlPath) {
 export function createHandler({ siteDir, recipesDir, base, log = () => {} }) {
   return async function handle(req, res) {
     const send = (status, body, headers = {}) => {
-      res.writeHead(status, { 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', ...headers });
+      res.writeHead(status, {
+        'Cache-Control': 'no-store',
+        'X-Content-Type-Options': 'nosniff',
+        'Content-Security-Policy': CSP,
+        'Referrer-Policy': 'no-referrer',
+        ...headers,
+      });
       res.end(req.method === 'HEAD' ? undefined : body);
       log(`${status} ${req.method} ${req.url}`);
     };

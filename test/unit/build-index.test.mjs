@@ -3,7 +3,9 @@ import assert from 'node:assert/strict';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
-import { buildIndex, buildVocabulary, formatReport } from '../../tools/build-index.mjs';
+import { buildIndex, buildVocabulary, formatReport, sameIndex, writeAtomic } from '../../tools/build-index.mjs';
+import { mkdtemp, cp, readFile, readdir, stat, rm } from 'node:fs/promises';
+import os from 'node:os';
 import { FACETS, FACET_VALUES } from '../../site/js/taxonomy.js';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
@@ -108,4 +110,37 @@ test('CLI: --help, --strict, usage errors', () => {
   const ok = run(samples, '--dry-run', '--strict', '--report');
   assert.equal(ok.status, 0, ok.stderr);
   assert.match(ok.stdout, /Inferred or uncategorised/);
+});
+
+test('sameIndex ignores only the timestamp', () => {
+  const a = { version: 1, generated: '2026-01-01', recipes: [{ id: 'x' }] };
+  assert.ok(sameIndex(a, { ...a, generated: '2027-01-01' }));
+  assert.ok(!sameIndex(a, { ...a, recipes: [] }));
+  assert.ok(!sameIndex(null, a));
+});
+
+test('writeAtomic replaces the file and leaves no temp files', async () => {
+  const dir = await mkdtemp(path.join(os.tmpdir(), 'idx-'));
+  const file = path.join(dir, 'index.json');
+  await writeAtomic(file, 'one');
+  await writeAtomic(file, 'two');
+  assert.equal(await readFile(file, 'utf8'), 'two');
+  assert.deepEqual(await readdir(dir), ['index.json']);
+  await rm(dir, { recursive: true });
+});
+
+test('CLI --if-changed only rewrites when recipes change', async () => {
+  const dir = await mkdtemp(path.join(os.tmpdir(), 'recipes-'));
+  await cp(samples, dir, { recursive: true });
+  await rm(path.join(dir, 'index.json'), { force: true });
+  const run = () => spawnSync(process.execPath, [cli, dir, '--if-changed'], { encoding: 'utf8' });
+
+  assert.match(run().stdout, /^Wrote /);
+  const first = await stat(path.join(dir, 'index.json'));
+  assert.match(run().stdout, /^Unchanged: /);
+  assert.equal((await stat(path.join(dir, 'index.json'))).mtimeMs, first.mtimeMs);
+
+  await rm(path.join(dir, 'sauces/basil-pesto.json'));
+  assert.match(run().stdout, /^Wrote .*\(18 recipes/);
+  await rm(dir, { recursive: true });
 });

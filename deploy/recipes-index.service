@@ -1,0 +1,22 @@
+# Rebuilds recipes/index.json when recipe files change.
+# Install (with recipes-index.timer):
+#   sudo cp deploy/recipes-index.service deploy/recipes-index.timer /etc/systemd/system/
+#   sudoedit /etc/systemd/system/recipes-index.service      # check User and paths
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now recipes-index.timer
+# Check:  systemctl list-timers recipes-index   ·   journalctl -u recipes-index
+
+[Unit]
+Description=Rebuild the recipes index
+After=network-online.target remote-fs.target
+Wants=network-online.target
+RequiresMountsFor=/mnt/nas
+
+[Service]
+Type=oneshot
+# The user that owns the SMB mount (uid= in fstab) so it can write index.json.
+User=pi
+# /opt/recipes is a checkout of this repository on the Pi.
+ExecStart=/usr/bin/node /opt/recipes/tools/build-index.mjs /mnt/nas/recipes/recipes --if-changed
+Nice=10
+IOSchedulingClass=idle
