@@ -1,0 +1,49 @@
+{
+  "@context": "https://schema.org",
+  "@type": "Recipe",
+  "name": "Slow-Cooked Beef Ragù with Pappardelle",
+  "description": "Chunks of braising beef cooked low and slow in red wine and tomatoes until they fall apart into a rich sauce. Worth it for a weekend.",
+  "author": { "@type": "Organization", "name": "Recipes sample collection" },
+  "license": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "recipeCategory": "Main course",
+  "recipeCuisine": "Italian",
+  "keywords": "protein:Beef, carb:Pasta, weekend, freezable",
+  "prepTime": "PT20M",
+  "cookTime": "PT3H",
+  "totalTime": "PT3H20M",
+  "recipeYield": "6 servings",
+  "recipeIngredient": [
+    "2 tbsp olive oil",
+    "1 kg braising beef, cut into large chunks",
+    "1 onion, finely chopped",
+    "2 carrots, finely chopped",
+    "2 celery sticks, finely chopped",
+    "3 garlic cloves, crushed",
+    "2 tbsp tomato purée",
+    "250 ml red wine",
+    "2 x 400 g tins chopped tomatoes",
+    "2 bay leaves",
+    "500 g pappardelle",
+    "Grated parmesan, to serve"
+  ],
+  "recipeInstructions": [
+    {
+      "@type": "HowToSection",
+      "name": "For the ragù",
+      "itemListElement": [
+        { "@type": "HowToStep", "text": "Heat the oven to 150°C (130°C fan). Season the beef and brown it in batches in the oil in a large casserole. Set aside." },
+        { "@type": "HowToStep", "text": "Lower the heat and cook the onion, carrots and celery for 10 minutes until soft. Add the garlic and tomato purée and cook for 2 minutes." },
+        { "@type": "HowToStep", "text": "Pour in the wine and bubble for a few minutes, then add the tomatoes, bay leaves and beef. Bring to a simmer." },
+        { "@type": "HowToStep", "text": "Cover and cook in the oven for 3 hours, stirring once or twice, until the beef shreds easily. Break it up with two forks." }
+      ]
+    },
+    {
+      "@type": "HowToSection",
+      "name": "To serve",
+      "itemListElement": [
+        { "@type": "HowToStep", "text": "Cook the pappardelle in salted water until al dente. Reserve a mug of the cooking water, then drain." },
+        { "@type": "HowToStep", "text": "Toss the pasta with the ragù, loosening with a little pasta water. Serve with parmesan." }
+      ]
+    }
+  ]
+}

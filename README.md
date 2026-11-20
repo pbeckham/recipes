@@ -81,6 +81,7 @@ site/                   The deployable static app (copy this to the NAS)
     app.js              Entry point and hash router
     jsonld.js           JSON-LD → normalized Recipe (shared with tools/)
     taxonomy.js         Facet values, synonyms and inference rules (shared with tools/)
+    text.js             Text normalization and whole-word term matching (shared with tools/)
     search.js           Index search and filtering
     scale.js            Ingredient quantity parsing and scaling
     views/              Home, recipe and other views
@@ -98,7 +99,7 @@ deploy/
   pages.yml             Deploy site/ + samples to GitHub Pages on push to main
 ```
 
-`site/js/jsonld.js` and `site/js/taxonomy.js` are plain ES modules that both the browser and `tools/build-index.mjs` import, so the normalization and categorisation logic exists in one place.
+`site/js/jsonld.js`, `site/js/taxonomy.js` and `site/js/text.js` are plain ES modules that both the browser and `tools/build-index.mjs` import, so the normalization and categorisation logic exists in one place.
 
 ## Categories
 
@@ -125,12 +126,13 @@ The facet values are fixed and defined in `site/js/taxonomy.js`:
 **How values are inferred when a facet has no tags (R16)**
 - **Protein:** look for main-ingredient terms in the ingredient lines, e.g. "chicken thighs" or "duck breast" → Poultry, "prawns" → Fish & Seafood.
   - Flavourings such as fish sauce, anchovy paste, oyster sauce and stock add no protein.
-  - They do rule out *Vegetarian*: a recipe is inferred Vegetarian only if no meat or fish term appears anywhere, including stock, gelatine and anchovies.
+  - They do rule out *Vegetarian*: a recipe is inferred Vegetarian only if no meat or fish term appears anywhere, including stock, gelatine and anchovies. A recipe whose only animal ingredients are flavourings (e.g. a mushroom risotto made with chicken stock) gets no protein value and shows as *Uncategorised*.
+  - Look-alikes are ignored: beef tomatoes, lamb's lettuce, vegetable stock, vegetarian sausages.
   - Poultry covers chicken, turkey, duck, goose and similar birds. Other meats (venison, rabbit, goat, game) map to *Other*.
-- **Carb:** match terms such as spaghetti or penne → Pasta, rice or risotto → Rice, potato or gnocchi → Potato, couscous, quinoa or bulgur → Grains, tortilla, naan or bread → Bread. Breadcrumbs and flour don't count. Anything else is *None / Other*.
-- **Meal:** words in the name or keywords, e.g. "soup" or "chowder" → Soup, "cake", "loaf" or "muffin" → Baking. If nothing matches, the recipe is *Uncategorised*.
+- **Carb:** match terms such as spaghetti or penne → Pasta, rice or risotto → Rice, potato or gnocchi → Potato, couscous, quinoa or bulgur → Grains, tortilla, naan or bread → Bread. Rice noodles are Noodles, not Rice. Breadcrumbs, flour, rice vinegar and the like don't count. Anything else is *None / Other*.
+- **Meal:** words in the recipe name, e.g. "soup" or "chowder" → Soup, "cake", "loaf" or "muffin" → Baking. Only the part of the name before "with" or a comma is used, and the last matching word wins, because English dish names end in the main noun: "Bread Sauce" is a sauce, "Banana Bread" is baking. If the name doesn't match, keywords and `recipeCategory` are tried. If nothing matches, the recipe is *Uncategorised*.
 
-Inference is a convenience for untagged recipes, such as ones exported from websites. Where it guesses wrong, adding tags to the file fixes it.
+Inference is a convenience for untagged recipes, such as ones exported from websites. Where it guesses wrong, adding tags to the file fixes it. Run `build-index.mjs --report` to see which recipes rely on inference. All word lists live in `site/js/taxonomy.js`.
 
 ## Index format
 
@@ -166,7 +168,8 @@ Inference is a convenience for untagged recipes, such as ones exported from webs
 - `inferred` lists the facets whose values were guessed rather than tagged.
 - `keywords` excludes facet-prefixed keywords.
 - `added` is the file's modification time, used for "newest" sorting.
-- The top level also contains an `ingredientVocabulary` array (normalized ingredient terms with counts), used for suggestions in the ingredient filter.
+- The top level also contains `ingredientVocabulary`: `[{ "term": "garlic", "count": 10 }, …]`, most common first. These are normalized single words and common two-word terms ("olive oil"), counted by the number of recipes using them. The ingredient filter uses it for suggestions.
+- `index.json` is written without whitespace to keep it small.
 
 ---
 
@@ -175,7 +178,23 @@ Inference is a convenience for untagged recipes, such as ones exported from webs
 ### Local development
 
 ```bash
-node tools/build-index.mjs samples/recipes
+node tools/build-index.mjs samples/recipes --report
+```
+
+`build-index.mjs` options:
+
+| Option | Effect |
+|---|---|
+| `--report` | Print counts per category value, recipes without a time, and recipes with inferred or uncategorised facets |
+| `--strict` | Exit with status 1 if there are any warnings (used in CI) |
+| `--dry-run` | Don't write `index.json` |
+| `--out <file>` | Write the index somewhere other than `<recipes-dir>/index.json` |
+
+Warnings are printed for invalid JSON, files without a Recipe, recipes with no name, ingredients or instructions, missing local images, duplicate ids (`x.json` + `x.jsonld`), and unknown category tags. Broken files are skipped and the rest are still indexed.
+
+The dev server arrives in phase 2:
+
+```bash
 node tools/dev-server.mjs                      # serves samples at http://localhost:8080
 node tools/dev-server.mjs --recipes ~/my-recipes
 ```
@@ -183,8 +202,9 @@ node tools/dev-server.mjs --recipes ~/my-recipes
 ### Tests
 
 ```bash
-node --test test/unit        # unit tests, no dependencies
-npx playwright test          # end-to-end tests (dev dependency only)
+npm test                     # unit tests (node --test), no dependencies
+npm run index:samples        # build the sample index; fails on any warning
+npx playwright test          # end-to-end tests (from phase 2; dev dependency only)
 ```
 
 ### Home network deployment (NAS + Raspberry Pi)
@@ -210,8 +230,8 @@ Pushing to `main` runs `.github/workflows/pages.yml`. It copies `site/`, copies 
 
 | Phase | Deliverable | Requirements |
 |---|---|---|
-| 0 | README, CLAUDE.md, repo skeleton, CI | — |
-| 1 | JSON-LD normalizer, taxonomy and inference, index builder with `--report`, 15–20 CC0 sample recipes, unit tests | R1–R4, R14–R17 |
+| 0 ✅ | README, CLAUDE.md, repo skeleton, CI | — |
+| 1 ✅ | JSON-LD normalizer, taxonomy and inference, index builder with `--report`, 15–20 CC0 sample recipes, unit tests | R1–R4, R14–R17 |
 | 2 | Mobile-first app shell, hash router, recipe list with badges, recipe view, GitHub Pages deploy | R5, R9, N1–N5 |
 | 3 | Search, category filters (bottom sheet), time filter and sort, ingredient filter | R6–R8, R18, R19, N6 |
 | 4 | Cooking helpers: scaler, check-off, wake lock, print | R10–R13 |

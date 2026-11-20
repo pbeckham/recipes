@@ -1,0 +1,25 @@
+{
+  "@context": "https://schema.org",
+  "@type": "Recipe",
+  "name": "Warm Potato & Bacon Salad",
+  "description": "New potatoes dressed while still warm so they soak up the mustardy dressing, with crisp bacon and chives.",
+  "author": "Recipes sample collection",
+  "license": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "recipeCategory": ["Side dish", "Salad"],
+  "recipeCuisine": "German-inspired",
+  "keywords": "protein:Pork, carb:Potato, barbecue",
+  "prepTime": "PT10M",
+  "cookTime": "PT20M",
+  "totalTime": "PT30M",
+  "recipeYield": "4 as a side",
+  "recipeIngredient": [
+    "750 g new potatoes, halved if large",
+    "6 rashers smoked streaky bacon",
+    "1 shallot, finely chopped",
+    "1 tbsp wholegrain mustard",
+    "2 tbsp cider vinegar",
+    "3 tbsp olive oil",
+    "Small bunch of chives, snipped"
+  ],
+  "recipeInstructions": "1. Boil the potatoes in salted water for 15–20 minutes until tender.\n2. Meanwhile, fry the bacon until crisp, then cut into pieces.\n3. Whisk the shallot, mustard, vinegar and oil together and season.\n4. Drain the potatoes and toss with the dressing while still hot.\n5. Fold through the bacon and chives and serve warm."
+}

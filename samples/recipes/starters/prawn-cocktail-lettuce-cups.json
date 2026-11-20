@@ -1,0 +1,31 @@
+{
+  "@context": "https://schema.org",
+  "@type": "Recipe",
+  "name": "Prawn Cocktail Lettuce Cups",
+  "description": "A retro starter made lighter: cooked prawns in a tangy Marie Rose sauce, served in crisp little gem leaves. Ready in 15 minutes &amp; no cooking required.",
+  "author": { "@type": "Organization", "name": "Recipes sample collection" },
+  "license": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "recipeCategory": "Starter",
+  "recipeCuisine": "British",
+  "keywords": "protein:Fish & Seafood, carb:None, quick, no-cook, party",
+  "prepTime": "PT15M",
+  "totalTime": "PT15M",
+  "recipeYield": "4",
+  "recipeIngredient": [
+    "3 tbsp mayonnaise",
+    "1 tbsp tomato ketchup",
+    "1 tsp lemon juice",
+    "Few drops of hot sauce",
+    "250 g cooked peeled prawns",
+    "1/4 cucumber, finely diced",
+    "2 little gem lettuces, leaves separated",
+    "Pinch of paprika",
+    "Lemon wedges, to serve"
+  ],
+  "recipeInstructions": [
+    { "@type": "HowToStep", "text": "Mix the mayonnaise, ketchup, lemon juice and hot sauce to make the sauce." },
+    { "@type": "HowToStep", "text": "Pat the prawns dry, then fold them and the cucumber through the sauce." },
+    { "@type": "HowToStep", "text": "Spoon into the lettuce leaves, dust with paprika and serve with lemon wedges." }
+  ],
+  "nutrition": { "@type": "NutritionInformation", "calories": "160 kcal", "proteinContent": "13 g" }
+}

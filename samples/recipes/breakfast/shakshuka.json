@@ -1,0 +1,34 @@
+{
+  "@context": "https://schema.org",
+  "@type": "Recipe",
+  "name": "Shakshuka",
+  "description": "Eggs gently poached in a smoky pepper and tomato sauce, made in one pan. Bring plenty of bread for mopping up.",
+  "image": "shakshuka.svg",
+  "author": { "@type": "Organization", "name": "Recipes sample collection" },
+  "license": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "recipeCategory": ["Breakfast", "Brunch"],
+  "recipeCuisine": "Middle Eastern",
+  "keywords": "protein:Vegetarian, carb:Bread, one-pan, eggs",
+  "prepTime": "PT10M",
+  "cookTime": "PT25M",
+  "totalTime": "PT35M",
+  "recipeYield": "2 servings",
+  "recipeIngredient": [
+    "2 tbsp olive oil",
+    "1 onion, thinly sliced",
+    "1 red pepper, sliced",
+    "2 garlic cloves, crushed",
+    "1 tsp ground cumin",
+    "1 tsp smoked paprika",
+    "1 x 400 g tin chopped tomatoes",
+    "4 eggs",
+    "Small bunch of coriander, chopped",
+    "Crusty bread, to serve"
+  ],
+  "recipeInstructions": [
+    { "@type": "HowToStep", "text": "Heat the oil in a large frying pan and cook the onion and pepper over a medium heat for 10 minutes until soft." },
+    { "@type": "HowToStep", "text": "Stir in the garlic, cumin and paprika and cook for 1 minute, then add the tomatoes and simmer for 8–10 minutes until thickened. Season to taste." },
+    { "@type": "HowToStep", "text": "Make four hollows in the sauce, crack an egg into each, cover with a lid and cook for 5–6 minutes until the whites are set but the yolks still runny." },
+    { "@type": "HowToStep", "text": "Scatter with coriander and serve straight from the pan with bread." }
+  ]
+}

@@ -1,4 +1,5 @@
 site/recipes/
+samples/recipes/index.json
 node_modules/
 test-results/
 playwright-report/

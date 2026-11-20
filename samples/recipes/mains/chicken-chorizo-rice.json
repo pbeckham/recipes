@@ -1,0 +1,35 @@
+{
+  "@context": "https://schema.org",
+  "@type": ["Recipe", "CreativeWork"],
+  "name": "Chicken & Chorizo Rice",
+  "description": "A one-pot, paella-style supper. The chorizo releases smoky paprika oil that flavours everything.",
+  "author": { "@type": "Organization", "name": "Recipes sample collection" },
+  "license": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "recipeCategory": "Main course",
+  "recipeCuisine": "Spanish",
+  "keywords": "protein:Poultry, protein:Pork, carb:Rice, one-pot, weeknight",
+  "prepTime": "PT10M",
+  "cookTime": "PT40M",
+  "totalTime": "PT50M",
+  "recipeYield": "4",
+  "recipeIngredient": [
+    "1 tbsp olive oil",
+    "6 boneless chicken thighs, cut into chunks",
+    "100 g cooking chorizo, sliced",
+    "1 onion, chopped",
+    "1 red pepper, chopped",
+    "2 garlic cloves, crushed",
+    "1 tsp smoked paprika",
+    "250 g paella or long-grain rice",
+    "1 x 400 g tin chopped tomatoes",
+    "600 ml chicken stock",
+    "100 g frozen peas",
+    "Lemon wedges, to serve"
+  ],
+  "recipeInstructions": [
+    { "@type": "HowToStep", "text": "Brown the chicken in the oil in a large lidded frying pan, then add the chorizo and cook for 2 minutes more until it releases its oil." },
+    { "@type": "HowToStep", "text": "Add the onion and pepper and cook for 5 minutes, then stir in the garlic, paprika and rice." },
+    { "@type": "HowToStep", "text": "Pour in the tomatoes and stock, bring to the boil, then cover and simmer gently for 20 minutes." },
+    { "@type": "HowToStep", "text": "Scatter over the peas, cover and cook for 5 minutes more until the rice is tender. Serve with lemon wedges." }
+  ]
+}

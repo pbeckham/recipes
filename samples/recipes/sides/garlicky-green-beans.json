@@ -1,0 +1,26 @@
+{
+  "@context": "https://schema.org",
+  "@type": "Recipe",
+  "name": "Garlicky Green Beans with Almonds",
+  "description": "Quick, bright green beans tossed with golden garlic and toasted flaked almonds. Goes with almost anything.",
+  "author": { "@type": "Organization", "name": "Recipes sample collection" },
+  "license": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "recipeCategory": "Side dish",
+  "keywords": "protein:Vegetarian, carb:None, quick, vegan option",
+  "prepTime": "PT3M",
+  "cookTime": "PT7M",
+  "totalTime": "PT10M",
+  "recipeYield": "4 as a side",
+  "recipeIngredient": [
+    "400 g green beans, trimmed",
+    "25 g flaked almonds",
+    "1 tbsp butter or olive oil",
+    "2 garlic cloves, thinly sliced",
+    "Squeeze of lemon juice"
+  ],
+  "recipeInstructions": [
+    { "@type": "HowToStep", "text": "Blanch the beans in boiling salted water for 3–4 minutes, then drain." },
+    { "@type": "HowToStep", "text": "Meanwhile, toast the almonds in a dry frying pan until golden and tip onto a plate." },
+    { "@type": "HowToStep", "text": "Melt the butter in the pan, fry the garlic for 1 minute until just golden, then toss in the beans, almonds and lemon juice. Season and serve." }
+  ]
+}

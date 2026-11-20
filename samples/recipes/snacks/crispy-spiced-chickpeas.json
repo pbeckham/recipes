@@ -1,0 +1,27 @@
+{
+  "@context": "https://schema.org",
+  "@type": "Recipe",
+  "name": "Crispy Spiced Chickpeas",
+  "description": "Crunchy roasted chickpeas to nibble with drinks or scatter over salads.",
+  "author": { "@type": "Organization", "name": "Recipes sample collection" },
+  "license": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "recipeCategory": "Snack",
+  "keywords": "protein:Vegetarian, carb:None, vegan, store cupboard",
+  "prepTime": "PT5M",
+  "cookTime": "PT30M",
+  "totalTime": "PT35M",
+  "recipeYield": "4 servings",
+  "recipeIngredient": [
+    "2 x 400 g tins chickpeas, drained and patted very dry",
+    "2 tbsp olive oil",
+    "1 tsp smoked paprika",
+    "1 tsp ground cumin",
+    "1/2 tsp garlic granules",
+    "1/2 tsp flaky sea salt"
+  ],
+  "recipeInstructions": [
+    { "@type": "HowToStep", "text": "Heat the oven to 200°C (180°C fan). Toss the chickpeas with the oil on a large baking tray and roast for 20 minutes." },
+    { "@type": "HowToStep", "text": "Mix the spices and salt, sprinkle over the chickpeas, shake the tray and roast for 10 minutes more until crisp." },
+    { "@type": "HowToStep", "text": "Cool on the tray; they crisp up further as they cool." }
+  ]
+}

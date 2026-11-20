@@ -1,0 +1,13 @@
+{
+  "name": "recipes",
+  "private": true,
+  "description": "Static recipe browser for schema.org Recipe JSON-LD files",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test test/unit/*.test.mjs",
+    "index:samples": "node tools/build-index.mjs samples/recipes --strict --report"
+  }
+}

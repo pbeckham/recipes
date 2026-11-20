@@ -1,0 +1,1 @@
+{"@context":"https://schema.org","@graph":[{"@type":"WebPage"},{"@type":"Recipe","name":"Beta","image":"../photo.svg","recipeIngredient":["1 egg"],"recipeInstructions":"Cook it."}]}
