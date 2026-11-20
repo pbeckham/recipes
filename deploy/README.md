@@ -34,8 +34,29 @@ ls /mnt/chipolata/recipes/processed | head
 node --version
 ```
 
-Node needs to be **20 or newer**. Raspberry Pi OS "Trixie" ships Node 20 (`sudo apt install nodejs`). On older
-releases, install Node 20 or later from NodeSource.
+Node needs to be **20 or newer**. Raspberry Pi OS "Trixie" ships Node 20 (`sudo apt install nodejs`). Otherwise
+install the official build from nodejs.org. That's also the only option on **32-bit Raspberry Pi OS** (`armhf`),
+which NodeSource doesn't support. Node 22 is the last line with 32-bit ARM (`armv7l`) builds, supported until
+April 2027. Install it into `/usr/local`:
+
+```bash
+uname -m      # armv7l or aarch64: fine. armv6l (Pi Zero / Pi 1): not supported by these builds.
+```
+
+```bash
+cd /tmp && V=$(curl -fsSL https://nodejs.org/dist/latest-v22.x/SHASUMS256.txt | grep -o 'node-v22[^ ]*-linux-armv7l\.tar\.xz' | head -1) && echo "$V"
+```
+
+```bash
+curl -fsSLO "https://nodejs.org/dist/latest-v22.x/$V" && curl -fsSL https://nodejs.org/dist/latest-v22.x/SHASUMS256.txt | grep " $V\$" | sha256sum -c -
+```
+
+```bash
+sudo tar -xJf "/tmp/$V" -C /usr/local --strip-components=1 --exclude CHANGELOG.md --exclude LICENSE --exclude README.md && /usr/local/bin/node --version
+```
+
+On a 64-bit OS, replace `armv7l` with `arm64` in the first command. Node then lives at `/usr/local/bin/node`. Use
+that path in `recipes-index.service` (step 3).
 
 nginx runs as the `www-data` user, and it must be able to read the recipes folder:
 
@@ -58,8 +79,9 @@ sudo git clone https://github.com/pbeckham/recipes.git /opt/recipes && sudo chow
 
 ## 3. Index timer
 
-Edit `User=` in the service if your user isn't `pi`. The index is written to `/var/lib/recipes`, which systemd
-creates.
+Edit `User=` in the service if your user isn't `pi`, and the `node` path in `ExecStart=` if Node isn't at
+`/usr/bin/node` (`command -v node` shows where it is; `/usr/local/bin/node` if you installed it from nodejs.org).
+The index is written to `/var/lib/recipes`, which systemd creates.
 
 ```bash
 sudo cp /opt/recipes/deploy/recipes-index.service /opt/recipes/deploy/recipes-index.timer /etc/systemd/system/
@@ -157,6 +179,7 @@ Open `https://recipes.local/` on your phone. Add it to the home screen for one-t
 | "Keep screen on" button missing | The site is on plain HTTP, or the device doesn't trust the certificate. |
 | New recipe not showing | `systemctl list-timers recipes-index`, then `sudo systemctl start recipes-index`. |
 | nginx won't start | `sudo nginx -t` names the bad line. |
+| `recipes-index` fails with "Unable to locate executable … build-index.mjs: Permission denied" | The Node path is missing from `ExecStart=`. It must start with the full path to `node`. |
 
 The repository's tests run `deploy.sh` and this exact nginx config, with only paths, ports and certificate
 swapped, in a real nginx. They check the headers, caching, gzip and blocked paths, and load the app in a browser
