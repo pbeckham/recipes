@@ -343,6 +343,17 @@ main.loading {
   list-style: none;
 }
 
+/* Skip layout/paint for cards far off-screen (N6). The intrinsic size is a
+   placeholder height that the browser replaces with the real one once seen. */
+.card-list > li {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 118px;
+}
+
+.list-sentinel {
+  height: 1px;
+}
+
 .card {
   display: grid;
   grid-template-columns: 96px 1fr;
@@ -409,6 +420,10 @@ main.loading {
   .card-list {
     grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
     gap: 16px;
+  }
+
+  .card-list > li {
+    contain-intrinsic-size: auto 330px;
   }
 
   .card {

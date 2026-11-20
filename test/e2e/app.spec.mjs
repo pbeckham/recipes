@@ -68,17 +68,20 @@ test('opening a recipe shows ingredients and sectioned method, back returns to t
   await expect(page).toHaveURL(/#?\/?$/);
 });
 
-test('returning to the list restores the scroll position', async ({ page }) => {
+/** Top of a card relative to the viewport, rounded. */
+const cardTop = (locator) => locator.evaluate((el) => Math.round(el.getBoundingClientRect().top));
+
+test('returning to the list puts the same card back in the same place', async ({ page }) => {
   await page.goto('./');
   const target = page.locator('.card', { hasText: 'Venison' });
   await target.scrollIntoViewIfNeeded();
-  const before = await page.evaluate(() => window.scrollY);
-  expect(before).toBeGreaterThan(0);
+  expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
+  const top = await cardTop(target);
   await target.click();
   await expect(page.locator('.ingredient-list')).toBeVisible();
   await page.goBack();
   await expect(page.locator('.card-list')).toBeVisible();
-  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(before);
+  await expect.poll(async () => Math.abs((await cardTop(target)) - top), 'card moved (px)').toBeLessThanOrEqual(1);
 });
 
 test('deep links work for every JSON-LD shape in the samples', async ({ page }) => {
@@ -157,4 +160,41 @@ test('recipe text is never interpreted as HTML', async ({ page }) => {
   await expect(page.locator('.recipe img[src="x"]')).toHaveCount(0);
   await expect(page.locator('.source-link')).toHaveCount(0);
   expect(await page.evaluate(() => window.pwned)).toBeUndefined();
+});
+
+test('large collections render in batches while scrolling and keep their place on back', async ({ page }) => {
+  // 19 samples × 8 = 152 recipes, enough for several batches.
+  await page.route('**/recipes/index.json', async (route) => {
+    const index = await (await route.fetch()).json();
+    const base = index.recipes;
+    index.recipes = Array.from({ length: 8 }, (_, i) => base.map((r) => ({ ...r, id: `${r.id}-${i}`, name: `${r.name} ${String(i).padStart(2, '0')}` }))).flat();
+    await route.fulfill({ json: index });
+  });
+  await page.goto('./');
+  await expect(page.getByText('152 recipes')).toBeVisible();
+  await expect(page.locator('.card')).toHaveCount(48);
+
+  // Scroll until everything is rendered.
+  await expect(async () => {
+    await page.mouse.wheel(0, 5000);
+    await expect(page.locator('.card')).toHaveCount(152, { timeout: 200 });
+  }).toPass({ timeout: 10_000 });
+  await expect(page.locator('.list-sentinel')).toHaveCount(0);
+
+  // Wheel scrolling is animated: jump to the bottom and wait until the page
+  // is still before measuring.
+  await page.evaluate(() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'instant' }));
+  const last = page.locator('.card').last();
+  let top = await cardTop(last);
+  await expect(async () => {
+    const prev = top;
+    await page.waitForTimeout(100);
+    top = await cardTop(last);
+    expect(top).toBe(prev);
+  }).toPass();
+  await last.click();
+  await expect(page.locator('.ingredient-list')).toBeVisible();
+  await page.goBack();
+  await expect(page.locator('.card')).toHaveCount(152);
+  await expect.poll(async () => Math.abs((await cardTop(last)) - top), 'card moved (px)').toBeLessThanOrEqual(1);
 });

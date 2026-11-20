@@ -17,8 +17,12 @@ if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
 let navToken = 0;
 let firstRender = true;
 let homeScrollY = 0;
+/** First card visible when leaving the list, and its distance from the viewport top. */
+let homeAnchor = null;
 let currentRoute = '';
 let cameFromHome = false;
+/** The built list view, reused when returning so "back" is instant and keeps its scroll position. */
+let homeCache = { index: null, node: null };
 
 /** @returns {{ name: 'home' } | { name: 'recipe', id: string } | { name: 'unknown' }} */
 function parseRoute(hash) {
@@ -82,7 +86,7 @@ async function route() {
   const stale = () => token !== navToken;
   const r = parseRoute(location.hash);
 
-  if (currentRoute === 'home' && r.name !== 'home') homeScrollY = window.scrollY;
+  if (currentRoute === 'home' && r.name !== 'home') rememberHomePosition();
   const returningHome = r.name === 'home' && currentRoute !== 'home' && currentRoute !== '';
   cameFromHome = currentRoute === 'home' && r.name === 'recipe';
   currentRoute = r.name;
@@ -104,7 +108,9 @@ async function route() {
   if (stale()) return;
 
   if (r.name === 'home') {
-    show(renderHome(index), { scrollY: returningHome ? homeScrollY : 0 });
+    if (homeCache.index !== index) homeCache = { index, node: renderHome(index) };
+    show(homeCache.node, { scrollY: returningHome ? homeScrollY : 0 });
+    if (returningHome) restoreHomeAnchor();
     return;
   }
   if (r.name === 'unknown') {
@@ -126,6 +132,46 @@ async function route() {
     if (stale()) return;
     viewEl.replaceChildren(renderRecipe(entry, null, { error: err instanceof Error ? err.message : String(err) }));
   }
+}
+
+function rememberHomePosition() {
+  homeScrollY = window.scrollY;
+  const barBottom = document.querySelector('.app-bar')?.getBoundingClientRect().bottom ?? 0;
+  const card = [...viewEl.querySelectorAll('.card')].find((c) => c.getBoundingClientRect().bottom > barBottom);
+  homeAnchor = card ? { el: card, top: card.getBoundingClientRect().top } : null;
+}
+
+/**
+ * Off-screen cards use estimated heights (content-visibility), and they
+ * switch to their real heights over the next few frames after the list is
+ * reattached. Keep nudging the page until the remembered card is back where
+ * it was and has stayed there for a few frames (max ~1s). Stops as soon as
+ * the user scrolls themselves.
+ */
+function restoreHomeAnchor() {
+  const anchor = homeAnchor;
+  if (!anchor?.el.isConnected) return;
+  const started = performance.now();
+  let stableFrames = 0;
+  let cancelled = false;
+  const cancel = () => (cancelled = true);
+  const inputs = ['wheel', 'touchstart', 'keydown', 'mousedown'];
+  inputs.forEach((t) => window.addEventListener(t, cancel, { once: true, passive: true }));
+  const done = () => inputs.forEach((t) => window.removeEventListener(t, cancel));
+
+  const step = () => {
+    if (cancelled || !anchor.el.isConnected || currentRoute !== 'home') return done();
+    const diff = anchor.el.getBoundingClientRect().top - anchor.top;
+    if (Math.abs(diff) >= 1) {
+      window.scrollBy(0, diff);
+      stableFrames = 0;
+    } else {
+      stableFrames += 1;
+    }
+    if (stableFrames >= 5 || performance.now() - started > 1000) return done();
+    requestAnimationFrame(step);
+  };
+  step();
 }
 
 backEl.prepend(icon('back'));

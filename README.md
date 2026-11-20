@@ -71,6 +71,24 @@ Favourites, shopping lists, meal plans, offline/PWA, an in-app editor, and impor
 
 ---
 
+## Performance with large collections
+
+The app is designed for 1,000+ recipes (N6):
+- **The list renders in batches** of 48 cards, with more added as you scroll. Cards far off-screen skip layout and painting (`content-visibility: auto`).
+- **The built list is kept** when you open a recipe, so going back is instant and returns to the same card.
+- **Images load lazily.** Search and filters (phase 3) work on the in-memory `index.json`, and a recipe file is only fetched when you open it.
+
+Measured with 1,520 recipes on an emulated Pixel 7 with the CPU slowed 4×, served statically:
+
+| | Result |
+|---|---|
+| `build-index.mjs` | under 1 s |
+| `index.json` | ~1.1 MB raw (nginx `gzip on` cuts it to a few hundred KB for real recipes) |
+| First screen of the list | ~0.4 s, the same as with 19 recipes |
+| Back from a recipe | ~0.5 s, same card in the same place |
+
+Without batching the same list took 3.5 s to appear and 7.8 s to come back to.
+
 ## Repository layout
 
 ```
