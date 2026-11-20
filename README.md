@@ -102,7 +102,8 @@ site/                   The deployable static app (copy this to the NAS)
     taxonomy.js         Facet values, synonyms and inference rules (shared with tools/)
     text.js             Text normalization and whole-word term matching (shared with tools/)
     search.js           Search, filters, counts, sorting and URL state (pure; unit-tested)
-    scale.js            Ingredient quantity parsing and scaling
+    scale.js            Ingredient quantity parsing and scaling (pure; unit-tested)
+    cooking.js          Per-recipe session state (servings, ticks) and Screen Wake Lock
     data.js             Loading index.json and recipe files
     dom.js              Tiny DOM helpers (text only, never innerHTML for recipe data)
     format.js           Times and nutrition labels
@@ -210,6 +211,20 @@ Inference is a convenience for untagged recipes, such as ones exported from webs
 - **Sort:** best match (while searching), name, quickest first, or newest first.
 - **Shareable URLs:** everything is kept in the URL, e.g. `#/?q=soup&meal=Main&protein=Poultry&time=60&ing=garlic&sort=time`, so a filtered view can be bookmarked or shared. Opening a recipe and going back keeps the filters and your place in the list.
 
+## Cooking helpers
+
+On a recipe page:
+- **Servings stepper:** − / + rescales the ingredient quantities, and scaled amounts are highlighted.
+  - When the yield isn't a number of servings (e.g. "1 loaf (10 slices)"), it becomes a ×½ … ×4 multiplier instead.
+  - Only a quantity at the start of a line is scaled: `2`, `1.5`, `1 1/2`, `½`, `2-3`, `500g`, `1 x 400 g tin`. Lines like "Juice of 1 lemon" or "Salt, to taste" stay exactly as written.
+  - **Measured amounts** (with a unit: g, ml, tbsp, cup…) keep their precision: `2⅔ tbsp`, `335 ml`.
+  - **Counted items** round to something usable: the nearest ½ below 2, otherwise a whole number. "1 onion" × 8/6 → `1½ onion`, "2 carrots" → `3 carrots`.
+- **Tick off** an ingredient or step by tapping it, or with Space when using a keyboard. "Clear ticks" resets them.
+- **Servings and ticks last for the browser session.** They survive leaving the recipe and reloading, but not closing the tab.
+- **Keep screen on** stops the phone or tablet from sleeping while the recipe is open (Screen Wake Lock API), and is released when you leave the recipe.
+  - Browsers only offer this on **HTTPS or `localhost`**, so the button is hidden when the app is served over plain HTTP on your LAN. Phase 5 covers enabling HTTPS on the Pi.
+- **Print** gives a clean one-page layout: ingredients beside the method, no buttons, a small image, nothing struck through. If you scaled the recipe, it prints the scaled quantities with a note ("Quantities scaled to 8 servings.").
+
 ## Usage
 
 ### Local development
@@ -279,7 +294,7 @@ Pushing to `main` runs `.github/workflows/pages.yml`. It copies `site/`, copies 
 | 1 ✅ | JSON-LD normalizer, taxonomy and inference, index builder with `--report`, 15–20 CC0 sample recipes, unit tests | R1–R4, R14–R17 |
 | 2 ✅ | Mobile-first app shell, hash router, recipe list with badges, recipe view, GitHub Pages deploy | R5, R9, N1–N5 |
 | 3 ✅ | Search, category filters (bottom sheet), time filter and sort, ingredient filter | R6–R8, R18, R19, N6 |
-| 4 | Cooking helpers: scaler, check-off, wake lock, print | R10–R13 |
+| 4 ✅ | Cooking helpers: scaler, check-off, wake lock, print | R10–R13 |
 | 5 | NAS deployment: nginx and cron examples, documented end to end | — |
 | Later | Favourites, shopping list, PWA/offline, validator CLI, import-from-URL CLI, ingredient exclusion, "what can I make?" pantry matching | — |
 

@@ -552,12 +552,11 @@ main.loading {
   list-style: none;
 }
 
-.ingredient-list li {
-  padding: 10px 0;
+.ingredient-list > li {
   border-bottom: 1px solid var(--border);
 }
 
-.ingredient-list li:first-child {
+.ingredient-list > li:first-child {
   border-top: 1px solid var(--border);
 }
 
@@ -577,18 +576,53 @@ main.loading {
   padding: 0;
   list-style: none;
   display: grid;
-  gap: 18px;
+  gap: 6px;
 }
 
-.step-list li {
+.step-list > li {
   counter-increment: step;
-  display: grid;
-  grid-template-columns: 2rem 1fr;
-  gap: 12px;
 }
 
-.step-list li::before {
-  content: counter(step);
+/* ---- tickable rows (R11): the whole row is the checkbox's label */
+.tick {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1.5rem 1fr;
+  gap: 12px;
+  align-items: start;
+  padding: 10px 4px;
+  border-radius: 10px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.step .tick {
+  grid-template-columns: 2rem 1fr;
+  padding: 8px 4px;
+}
+
+.tick-input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+}
+
+.tick:has(.tick-input:focus-visible) {
+  outline: 3px solid var(--focus);
+  outline-offset: 0;
+}
+
+.tick-box {
+  width: 1.375rem;
+  height: 1.375rem;
+  margin-top: 0.1em;
+  border: 2px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+}
+
+.step-marker {
   display: grid;
   place-items: center;
   width: 2rem;
@@ -598,6 +632,56 @@ main.loading {
   color: var(--text);
   font-weight: 700;
   font-size: 0.9375rem;
+}
+
+.step-marker::before {
+  content: counter(step);
+}
+
+.tick-input:checked ~ .tick-box {
+  border-color: var(--accent);
+  background: var(--accent)
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E")
+    center / 85% no-repeat;
+}
+
+.tick-input:checked ~ .step-marker {
+  background: var(--accent);
+  color: var(--accent-text);
+}
+
+.tick-input:checked ~ .step-marker::before {
+  content: '✓';
+}
+
+.tick-input:checked ~ .tick-text {
+  color: var(--text-2);
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+}
+
+.qty-scaled {
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.tick-input:checked ~ .tick-text .qty-scaled {
+  color: inherit;
+}
+
+.section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.section-head [hidden] {
+  display: none;
+}
+
+.tick-hint {
+  margin-top: 16px;
 }
 
 .recipe-more {
@@ -1262,6 +1346,298 @@ html:has(dialog[open]) {
 
   .search-row {
     max-width: 720px;
+  }
+}
+
+/* ------------------------------------------------------------ cooking tools (R10, R12) */
+.cook-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 16px;
+  margin-top: 24px;
+  padding: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.scaler {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+}
+
+.tool-label {
+  font-weight: 600;
+}
+
+.stepper {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg);
+}
+
+.stepper-button {
+  width: var(--tap);
+  height: var(--tap);
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--accent);
+  font: inherit;
+  font-size: 1.375rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.stepper-button:disabled {
+  color: var(--text-2);
+  opacity: 0.4;
+  cursor: default;
+}
+
+.stepper-value {
+  min-width: 6.5rem;
+  text-align: center;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.stepper-note {
+  font-size: 0.875rem;
+  flex-basis: 100%;
+}
+
+.stepper-reset[hidden] {
+  display: none;
+}
+
+.tool-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tool-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: var(--tap);
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.tool-toggle[aria-pressed='true'] {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-text);
+}
+
+/* ------------------------------------------------------------ print (R13) */
+.print-only {
+  display: none;
+}
+
+@media print {
+  .print-only:not(:empty) {
+    display: block;
+  }
+
+  .scale-note {
+    margin: 0 0 2mm;
+    font-style: italic;
+  }
+
+  :root {
+    --bg: #fff;
+    --surface: #fff;
+    --surface-2: #eee;
+    --text: #000;
+    --text-2: #333;
+    --border: #bbb;
+    --accent: #000;
+    --accent-text: #fff;
+  }
+
+  @page {
+    margin: 14mm;
+  }
+
+  body {
+    font-size: 10.5pt;
+    line-height: 1.4;
+  }
+
+  .app-bar,
+  .skip-link,
+  .home,
+  .cook-tools,
+  .tick-hint,
+  .section-head .link-button,
+  .badges,
+  .muted.small,
+  .nutrition summary::marker {
+    display: none !important;
+  }
+
+  main {
+    max-width: none;
+    padding: 0;
+  }
+
+  .recipe {
+    --recipe-size: 10.5pt;
+  }
+
+  .recipe-head,
+  .recipe-head:not(.no-image) {
+    display: grid;
+    grid-template-columns: 1fr 45mm;
+    gap: 6mm;
+    align-items: start;
+  }
+
+  .recipe-head .recipe-media {
+    grid-column: 2;
+    grid-row: 1;
+    width: 45mm;
+    height: 34mm;
+    max-height: none;
+    margin: 0;
+    border-radius: 3mm;
+  }
+
+  .recipe-intro {
+    gap: 3mm;
+  }
+
+  .recipe-intro h1 {
+    font-size: 20pt;
+  }
+
+  .facts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2mm 6mm;
+  }
+
+  .fact {
+    padding: 0;
+    border: 0;
+  }
+
+  .fact dt {
+    display: inline;
+  }
+
+  .fact dt::after {
+    content: ': ';
+  }
+
+  .fact dd {
+    display: inline;
+  }
+
+  .recipe-body {
+    display: grid;
+    grid-template-columns: 62mm 1fr;
+    gap: 8mm;
+    margin-top: 6mm;
+  }
+
+  .ingredients {
+    position: static;
+    max-height: none;
+    overflow: visible;
+  }
+
+  .recipe-body h2 {
+    font-size: 13pt;
+    margin-bottom: 2mm;
+  }
+
+  .tick {
+    padding: 1mm 0;
+    gap: 2mm;
+    grid-template-columns: 4mm 1fr;
+  }
+
+  .step .tick {
+    grid-template-columns: 6mm 1fr;
+  }
+
+  .tick-box {
+    width: 3.2mm;
+    height: 3.2mm;
+    border-width: 1px;
+    border-radius: 1mm;
+  }
+
+  .step-marker {
+    width: 5.5mm;
+    height: 5.5mm;
+    font-size: 9pt;
+  }
+
+  /* Print everything un-ticked and in black, even if ticked on screen. */
+  .tick-input:checked ~ .tick-box,
+  .tick-input:checked ~ .step-marker {
+    background: var(--surface-2);
+    border-color: var(--border);
+    color: var(--text);
+  }
+
+  .tick-input:checked ~ .step-marker::before {
+    content: counter(step);
+  }
+
+  .tick-input:checked ~ .tick-text {
+    color: var(--text);
+    text-decoration: none;
+  }
+
+  .qty-scaled {
+    color: inherit;
+  }
+
+  .ingredient-list > li,
+  .step-list > li,
+  .method-section h3 {
+    break-inside: avoid;
+  }
+
+  .method-section h3 {
+    break-after: avoid;
+  }
+
+  .recipe-more {
+    margin-top: 6mm;
+    padding-top: 3mm;
+    font-size: 9pt;
+  }
+
+  /* Show the source address on paper. */
+  .source-link::after {
+    content: ' — ' attr(href);
+    font-weight: 400;
+    word-break: break-all;
+  }
+
+  .source-link .icon {
+    display: none;
   }
 }
 
