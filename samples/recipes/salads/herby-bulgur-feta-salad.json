@@ -1,0 +1,31 @@
+{
+  "@context": "https://schema.org",
+  "@type": "Recipe",
+  "name": "Herby Bulgur Salad with Feta",
+  "description": "Lots of parsley and mint, nutty bulgur wheat, crunchy cucumber and salty feta. Keeps well for packed lunches.",
+  "author": { "@type": "Organization", "name": "Recipes sample collection" },
+  "license": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "recipeCategory": "Salad",
+  "recipeCuisine": "Mediterranean",
+  "keywords": ["protein:Vegetarian", "carb:Grains", "packed lunch"],
+  "prepTime": "PT15M",
+  "cookTime": "PT10M",
+  "totalTime": "PT25M",
+  "recipeYield": "4 servings",
+  "recipeIngredient": [
+    "150 g bulgur wheat",
+    "1/2 cucumber, diced",
+    "200 g cherry tomatoes, quartered",
+    "1 large bunch flat-leaf parsley, finely chopped",
+    "Small bunch of mint, leaves chopped",
+    "4 spring onions, sliced",
+    "Juice of 1 lemon",
+    "3 tbsp extra virgin olive oil",
+    "100 g feta, crumbled"
+  ],
+  "recipeInstructions": [
+    { "@type": "HowToStep", "text": "Cook the bulgur in boiling salted water for 10 minutes, or according to the packet. Drain well, spread out on a tray and leave to cool." },
+    { "@type": "HowToStep", "text": "Toss the bulgur with the cucumber, tomatoes, herbs and spring onions." },
+    { "@type": "HowToStep", "text": "Whisk the lemon juice and oil with plenty of seasoning, pour over and mix. Crumble over the feta to serve." }
+  ]
+}

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-label="Illustration of a sliced loaf of banana bread">
+  <rect width="800" height="600" fill="#f1e7d6"/>
+  <rect x="80" y="420" width="640" height="40" rx="20" fill="#a77b4f"/>
+  <path d="M150 420 L150 300 Q150 220 260 210 L520 210 Q600 220 600 300 L600 420 Z" fill="#7b4a22"/>
+  <path d="M190 260 Q330 230 560 255" stroke="#5c3418" stroke-width="10" fill="none" stroke-linecap="round"/>
+  <path d="M620 420 L620 300 Q620 230 660 225 L690 228 L690 420 Z" fill="#d7a866" stroke="#7b4a22" stroke-width="10"/>
+  <g fill="#5c3418"><circle cx="645" cy="300" r="7"/><circle cx="665" cy="350" r="6"/><circle cx="640" cy="385" r="7"/></g>
+  <g transform="rotate(-20 330 160)">
+    <path d="M220 160 Q330 90 440 160 Q330 120 220 160 Z" fill="#f2c94c" stroke="#b8902a" stroke-width="6"/>
+  </g>
+</svg>

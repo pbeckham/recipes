@@ -1,0 +1,32 @@
+{
+  "@context": "https://schema.org",
+  "@type": "Recipe",
+  "name": "Roast Tomato & Red Pepper Soup",
+  "description": "Roasting the vegetables first gives this soup a deep, sweet flavour. Blend until silky and serve with crusty bread.",
+  "image": { "@type": "ImageObject", "url": "roast-tomato-soup.svg" },
+  "author": { "@type": "Organization", "name": "Recipes sample collection" },
+  "license": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "recipeCategory": "Soup",
+  "keywords": "freezable, batch cooking",
+  "prepTime": "PT10M",
+  "cookTime": "PT45M",
+  "totalTime": "PT55M",
+  "recipeYield": ["4", "4 bowls"],
+  "recipeIngredient": [
+    "1 kg ripe tomatoes, halved",
+    "2 red peppers, roughly chopped",
+    "1 red onion, cut into wedges",
+    "4 garlic cloves, unpeeled",
+    "3 tbsp olive oil",
+    "1 tsp dried oregano",
+    "600 ml vegetable stock",
+    "1 tbsp balsamic vinegar",
+    "Crusty bread, to serve"
+  ],
+  "recipeInstructions": [
+    { "@type": "HowToStep", "text": "Heat the oven to 200°C (180°C fan). Toss the tomatoes, peppers, onion and garlic with the oil and oregano in a large roasting tin and season." },
+    { "@type": "HowToStep", "text": "Roast for 40 minutes until soft and catching at the edges." },
+    { "@type": "HowToStep", "text": "Squeeze the garlic from its skins, then tip everything into a pan with the stock and vinegar. Bring to a simmer." },
+    { "@type": "HowToStep", "text": "Blend until smooth, check the seasoning and serve with bread." }
+  ]
+}

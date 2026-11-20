@@ -1,0 +1,31 @@
+{
+  "@context": "https://schema.org",
+  "@type": "Recipe",
+  "name": "Speedy Egg Fried Rice",
+  "description": "The best use for leftover rice. Cold, day-old rice fries up into separate, slightly crisp grains.",
+  "author": { "@type": "Organization", "name": "Recipes sample collection" },
+  "license": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "recipeCategory": "Side dish",
+  "recipeCuisine": "Chinese-inspired",
+  "keywords": ["protein:Vegetarian", "carb:Rice", "leftovers", "quick"],
+  "prepTime": "PT5M",
+  "cookTime": "PT10M",
+  "totalTime": "PT15M",
+  "recipeYield": "2",
+  "recipeIngredient": [
+    "1 tbsp vegetable oil",
+    "4 spring onions, sliced, whites and greens separated",
+    "1 garlic clove, finely chopped",
+    "350 g cooked and cooled long-grain rice",
+    "100 g frozen peas",
+    "2 eggs, beaten",
+    "1 1/2 tbsp soy sauce",
+    "1 tsp toasted sesame oil"
+  ],
+  "recipeInstructions": [
+    { "@type": "HowToStep", "text": "Heat the oil in a wok until very hot. Stir-fry the spring onion whites and garlic for 30 seconds." },
+    { "@type": "HowToStep", "text": "Add the rice and peas and stir-fry for 4–5 minutes, breaking up any clumps, until piping hot." },
+    { "@type": "HowToStep", "text": "Push the rice to one side, pour the eggs into the gap and scramble, then mix through the rice." },
+    { "@type": "HowToStep", "text": "Season with soy sauce and sesame oil and scatter with the spring onion greens." }
+  ]
+}

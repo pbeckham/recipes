@@ -13,9 +13,9 @@ Guidance for Claude (and humans) working in this repo. The requirements live in 
 
 ## Commands
 ```bash
-node tools/build-index.mjs samples/recipes   # build sample index
-node tools/dev-server.mjs                    # http://localhost:8080 with sample recipes
-node --test test/unit                        # unit tests (fast, run always)
+npm test                                     # unit tests (node --test, fast, run always)
+npm run index:samples                        # build sample index with --strict --report
+node tools/dev-server.mjs                    # http://localhost:8080 with sample recipes (phase 2+)
 npx playwright test --trace off              # e2e tests (run when UI changes)
 ```
 
@@ -26,8 +26,8 @@ npx playwright test --trace off              # e2e tests (run when UI changes)
    - Inference rules need tests for both positive cases and known traps: fish sauce in a beef dish, chicken stock in a "vegetarian-looking" risotto, breadcrumbs that aren't the carb.
 3. Implement.
 4. Verify:
-   - `node --test test/unit` passes.
-   - `node tools/build-index.mjs samples/recipes` prints no warnings (except from fixtures that are meant to be bad, which live in `test/fixtures/`, not in samples).
+   - `npm test` passes.
+   - `npm run index:samples` prints no warnings. Fixtures that are meant to be bad live in `test/fixtures/`, never in `samples/`.
    - For UI changes, run the dev server and take Playwright screenshots in light and dark mode at:
      - phone 390×844 (primary)
      - tablet portrait 820×1180

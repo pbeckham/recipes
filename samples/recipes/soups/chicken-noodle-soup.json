@@ -1,0 +1,48 @@
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": "#website",
+      "name": "Recipes sample collection"
+    },
+    {
+      "@type": "WebPage",
+      "@id": "#webpage",
+      "name": "Ginger Chicken Noodle Soup",
+      "isPartOf": { "@id": "#website" }
+    },
+    {
+      "@type": "Recipe",
+      "@id": "#recipe",
+      "mainEntityOfPage": { "@id": "#webpage" },
+      "name": "Ginger Chicken Noodle Soup",
+      "description": "A clear, gingery broth with poached chicken, greens and noodles. Comforting when you're under the weather.",
+      "author": { "@type": "Person", "name": "Sample Cook" },
+      "license": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "recipeCategory": "Soup",
+      "recipeCuisine": "Asian-inspired",
+      "keywords": "protein:Chicken, carb:Noodles, comfort food",
+      "prepTime": "PT10M",
+      "cookTime": "PT35M",
+      "totalTime": "PT45M",
+      "recipeYield": 4,
+      "recipeIngredient": [
+        "1.2 litres chicken stock",
+        "5 cm piece ginger, sliced",
+        "2 garlic cloves, sliced",
+        "2 chicken breasts",
+        "2 tbsp soy sauce",
+        "150 g egg noodles",
+        "2 pak choi, quartered",
+        "4 spring onions, sliced",
+        "1 red chilli, sliced (optional)"
+      ],
+      "recipeInstructions": [
+        { "@type": "HowToStep", "name": "Infuse", "text": "Bring the stock, ginger and garlic to a simmer in a large pan and cook for 10 minutes." },
+        { "@type": "HowToStep", "name": "Poach", "text": "Add the chicken breasts and poach gently for 15–18 minutes until cooked through. Lift out and shred with two forks." },
+        { "@type": "HowToStep", "name": "Finish", "text": "Season the broth with soy sauce, add the noodles and pak choi and cook for 4 minutes. Return the chicken, then ladle into bowls and top with spring onions and chilli." }
+      ]
+    }
+  ]
+}

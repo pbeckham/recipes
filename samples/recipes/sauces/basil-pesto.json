@@ -1,0 +1,19 @@
+{
+  "@context": "https://schema.org",
+  "@type": "Recipe",
+  "name": "Basil Pesto",
+  "description": "Fresh pesto pounded in a mortar or blitzed in a food processor. This file has no category tags and no times, so meal, protein and carb are all inferred.",
+  "author": { "@type": "Organization", "name": "Recipes sample collection" },
+  "license": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "recipeCuisine": "Italian",
+  "recipeYield": "1 small jar",
+  "recipeIngredient": [
+    "50 g pine nuts",
+    "1 small garlic clove",
+    "Large bunch of basil (about 60 g)",
+    "40 g parmesan, finely grated",
+    "100 ml extra virgin olive oil",
+    "Squeeze of lemon juice"
+  ],
+  "recipeInstructions": "Toast the pine nuts in a dry pan until pale golden, then cool.\nPound or blitz the garlic with a pinch of salt, then add the pine nuts and basil and work to a coarse paste.\nStir in the parmesan, then loosen with the oil and a squeeze of lemon. Season to taste.\nStore in a jar, covered with a thin layer of oil, in the fridge for up to a week."
+}

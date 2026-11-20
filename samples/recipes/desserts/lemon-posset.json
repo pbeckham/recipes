@@ -1,0 +1,25 @@
+{
+  "@context": "https://schema.org",
+  "@type": "Recipe",
+  "name": "Lemon Posset",
+  "description": "Three ingredients and almost no effort. Lemon juice sets hot cream into a silky, tangy pudding.",
+  "author": { "@type": "Organization", "name": "Recipes sample collection" },
+  "license": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "recipeCategory": "Dessert",
+  "recipeCuisine": "British",
+  "keywords": "protein:Vegetarian, carb:None / Other, make-ahead, dinner party",
+  "prepTime": "PT15M",
+  "totalTime": "PT3H15M",
+  "recipeYield": "4 small pots",
+  "recipeIngredient": [
+    "450 ml double cream",
+    "125 g caster sugar",
+    "2 lemons, zested and juiced (about 75 ml juice)",
+    "Shortbread biscuits, to serve (optional)"
+  ],
+  "recipeInstructions": [
+    { "@type": "HowToStep", "text": "Heat the cream and sugar in a pan, stirring until the sugar dissolves, then boil for exactly 3 minutes." },
+    { "@type": "HowToStep", "text": "Take off the heat, stir in the lemon juice and most of the zest and leave to cool for 10 minutes." },
+    { "@type": "HowToStep", "text": "Strain into small glasses or pots and chill for at least 3 hours until set. Top with the remaining zest." }
+  ]
+}

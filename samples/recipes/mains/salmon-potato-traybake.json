@@ -1,0 +1,28 @@
+{
+  "@context": "https://schema.org",
+  "@type": "Recipe",
+  "name": "Lemony Salmon & Potato Traybake",
+  "description": "Potatoes and green beans roast in the same tin as the salmon, so there's only one dish to wash. This file has prepTime and cookTime but no totalTime.",
+  "author": { "@type": "Organization", "name": "Recipes sample collection" },
+  "license": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "recipeCategory": "Dinner",
+  "recipeCuisine": "British",
+  "keywords": "protein:Fish, carb:Potato, traybake, weeknight",
+  "prepTime": "PT10M",
+  "cookTime": "PT30M",
+  "recipeYield": "2",
+  "recipeIngredient": [
+    "400 g baby potatoes, halved",
+    "2 tbsp olive oil",
+    "150 g green beans, trimmed",
+    "2 skinless salmon fillets",
+    "1 lemon, half sliced, half juiced",
+    "1 tbsp capers",
+    "Small bunch of dill, chopped"
+  ],
+  "recipeInstructions": [
+    { "@type": "HowToStep", "text": "Heat the oven to 220°C (200°C fan). Toss the potatoes with half the oil, season and roast for 15 minutes." },
+    { "@type": "HowToStep", "text": "Add the beans to the tin and nestle in the salmon. Top the fish with lemon slices and drizzle with the rest of the oil." },
+    { "@type": "HowToStep", "text": "Roast for 12–15 minutes until the salmon flakes easily. Squeeze over the lemon juice and scatter with capers and dill." }
+  ]
+}

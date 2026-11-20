@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-label="Illustration of shakshuka in a frying pan">
+  <rect width="800" height="600" fill="#e9dcc7"/>
+  <rect x="0" y="430" width="800" height="170" fill="#c9b08d"/>
+  <rect x="560" y="268" width="240" height="44" rx="22" fill="#2d2a28" transform="rotate(-12 560 290)"/>
+  <circle cx="380" cy="300" r="230" fill="#2d2a28"/>
+  <circle cx="380" cy="300" r="205" fill="#b8321f"/>
+  <circle cx="300" cy="230" r="20" fill="#d9572b"/><circle cx="470" cy="380" r="24" fill="#d9572b"/>
+  <circle cx="250" cy="370" r="16" fill="#d9572b"/><circle cx="500" cy="210" r="18" fill="#d9572b"/>
+  <g fill="#fbf7ef">
+    <ellipse cx="300" cy="300" rx="62" ry="54"/><ellipse cx="450" cy="270" rx="58" ry="52"/>
+    <ellipse cx="370" cy="410" rx="60" ry="50"/><ellipse cx="400" cy="170" rx="54" ry="46"/>
+  </g>
+  <g fill="#f2a516">
+    <circle cx="306" cy="296" r="24"/><circle cx="446" cy="274" r="23"/>
+    <circle cx="374" cy="406" r="24"/><circle cx="402" cy="172" r="21"/>
+  </g>
+  <g fill="#3f7a3a">
+    <circle cx="260" cy="250" r="7"/><circle cx="520" cy="330" r="8"/><circle cx="330" cy="470" r="6"/>
+    <circle cx="470" cy="440" r="7"/><circle cx="340" cy="150" r="6"/><circle cx="530" cy="230" r="6"/>
+  </g>
+</svg>

@@ -1,0 +1,29 @@
+{
+  "@context": "https://schema.org",
+  "@type": "Recipe",
+  "name": "Apple & Cinnamon Overnight Oats",
+  "description": "Stir everything together before bed and breakfast is waiting in the fridge. Grated apple keeps the oats soft and sweet without much added sugar.",
+  "author": { "@type": "Organization", "name": "Recipes sample collection" },
+  "license": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "recipeCategory": "Breakfast",
+  "recipeCuisine": "British",
+  "keywords": ["protein:Vegetarian", "carb:Grains", "make-ahead", "no-cook"],
+  "prepTime": "PT10M",
+  "totalTime": "PT8H10M",
+  "recipeYield": "2",
+  "recipeIngredient": [
+    "100 g rolled oats",
+    "1 eating apple, coarsely grated",
+    "200 ml milk",
+    "100 g natural yoghurt",
+    "1 tbsp chia seeds",
+    "1/2 tsp ground cinnamon",
+    "2 tsp maple syrup",
+    "A handful of chopped toasted hazelnuts, to serve"
+  ],
+  "recipeInstructions": [
+    "Mix the oats, grated apple, milk, yoghurt, chia seeds, cinnamon and maple syrup in a bowl.",
+    "Divide between two jars or bowls, cover and chill for at least 8 hours, or overnight.",
+    "Loosen with a splash more milk if needed and scatter over the hazelnuts before eating."
+  ]
+}

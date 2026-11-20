@@ -1,0 +1,34 @@
+{
+  "@context": "https://schema.org",
+  "@type": "Recipe",
+  "name": "Venison & Red Wine Stew",
+  "description": "A rich, dark winter stew with juniper and thyme. This file has no recipeCategory: the meal comes from a meal: keyword.",
+  "author": { "@type": "Organization", "name": "Recipes sample collection" },
+  "license": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "recipeCuisine": "Scottish",
+  "keywords": "meal:Main, protein:Other, carb:None / Other, winter, slow cook",
+  "prepTime": "PT25M",
+  "cookTime": "PT2H15M",
+  "totalTime": "PT2H40M",
+  "recipeYield": "6 servings",
+  "recipeIngredient": [
+    "1 kg diced venison shoulder",
+    "2 tbsp plain flour",
+    "3 tbsp oil",
+    "200 g smoked bacon lardons",
+    "2 onions, chopped",
+    "3 carrots, cut into chunks",
+    "250 g chestnut mushrooms, halved",
+    "6 juniper berries, lightly crushed",
+    "Few thyme sprigs",
+    "400 ml red wine",
+    "400 ml beef stock",
+    "1 tbsp redcurrant jelly"
+  ],
+  "recipeInstructions": [
+    { "@type": "HowToStep", "text": "Toss the venison in the seasoned flour and brown in batches in 2 tbsp of the oil in a large casserole. Set aside." },
+    { "@type": "HowToStep", "text": "Fry the lardons in the remaining oil until golden, then add the onions and carrots and cook for 8 minutes." },
+    { "@type": "HowToStep", "text": "Add the mushrooms, juniper and thyme, then return the venison and pour in the wine and stock." },
+    { "@type": "HowToStep", "text": "Cover and simmer very gently for 2 hours until the meat is tender. Stir in the redcurrant jelly and season to taste." }
+  ]
+}

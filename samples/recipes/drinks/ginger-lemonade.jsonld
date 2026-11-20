@@ -1,0 +1,25 @@
+{
+  "@context": "https://schema.org",
+  "@type": "Recipe",
+  "name": "Fresh Ginger Lemonade",
+  "description": "A fiery, cloudy lemonade with a fresh ginger syrup. Top up with sparkling water for fizz. This file has only a prepTime and uses the .jsonld extension.",
+  "author": { "@type": "Organization", "name": "Recipes sample collection" },
+  "license": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "recipeCategory": "Drinks",
+  "keywords": "protein:Vegetarian, carb:None, summer, non-alcoholic",
+  "prepTime": "PT20M",
+  "recipeYield": "6 glasses",
+  "recipeIngredient": [
+    "100 g fresh ginger, sliced",
+    "150 g golden caster sugar",
+    "250 ml water",
+    "6 lemons, juiced",
+    "1 litre chilled still or sparkling water",
+    "Ice and mint sprigs, to serve"
+  ],
+  "recipeInstructions": [
+    { "@type": "HowToStep", "text": "Simmer the ginger, sugar and 250 ml water for 10 minutes, then cool and strain to make a syrup." },
+    { "@type": "HowToStep", "text": "Mix the syrup with the lemon juice in a large jug." },
+    { "@type": "HowToStep", "text": "Top up with the chilled water and serve over ice with mint." }
+  ]
+}

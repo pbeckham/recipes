@@ -1,0 +1,33 @@
+{
+  "@context": "https://schema.org",
+  "@type": "Recipe",
+  "name": "Lamb Kofta Flatbreads",
+  "description": "Spiced lamb skewers, griddled and piled into warm flatbreads with garlicky yoghurt and a quick pickled onion. No protein or carb tags in this file: the index infers them from the ingredients.",
+  "author": { "@type": "Organization", "name": "Recipes sample collection" },
+  "license": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "recipeCategory": "Main course",
+  "recipeCuisine": "Middle Eastern",
+  "keywords": "barbecue, family",
+  "prepTime": "PT25M",
+  "cookTime": "PT15M",
+  "recipeYield": "4",
+  "recipeIngredient": [
+    "500 g lamb mince",
+    "1 small onion, grated",
+    "2 garlic cloves, crushed",
+    "1 tsp ground cumin",
+    "1 tsp ground coriander",
+    "Small bunch of parsley, chopped",
+    "1 red onion, thinly sliced",
+    "Juice of 1 lemon",
+    "150 g Greek yoghurt",
+    "4 flatbreads",
+    "Lamb's lettuce, to serve"
+  ],
+  "recipeInstructions": [
+    { "@type": "HowToStep", "text": "Toss the red onion with the lemon juice and a pinch of salt and set aside to pickle." },
+    { "@type": "HowToStep", "text": "Mix the lamb, grated onion, half the garlic, the spices and parsley with plenty of seasoning. Shape into 8 sausages around skewers." },
+    { "@type": "HowToStep", "text": "Cook on a hot griddle or barbecue for 10–12 minutes, turning, until charred and cooked through." },
+    { "@type": "HowToStep", "text": "Stir the remaining garlic into the yoghurt. Warm the flatbreads and fill with the kofta, yoghurt, pickled onion and salad leaves." }
+  ]
+}

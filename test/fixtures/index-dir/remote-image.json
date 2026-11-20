@@ -1,0 +1,1 @@
+{"@context":"https://schema.org","@type":"Recipe","name":"Remote image","image":"https://example.com/x.jpg","recipeIngredient":["1 egg"],"recipeInstructions":"Cook it."}
