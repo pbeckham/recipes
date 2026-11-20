@@ -17,7 +17,8 @@ Files in this folder:
 | File | What it is |
 |---|---|
 | `deploy.sh` | Copies the app to `/var/www/recipes` and rebuilds the index. Run it for the first install and after every update. |
-| `nginx.conf.example` | nginx site: HTTPS, the folder mapping above, gzip, caching and security headers. |
+| `nginx.conf.example` | A dedicated nginx site for the app: HTTPS, the folder mapping above, gzip, caching and security headers. |
+| `nginx-cookbook-http.conf`, `nginx-cookbook-locations.conf` | Or: the same app at `/cookbook/` inside an nginx site you already have (step 6, option A). |
 | `recipes-index.service`, `recipes-index.timer` | Rebuild the index from the recipes folder every 5 minutes. The file is only rewritten when recipes changed. |
 
 The commands below use `pi` as the Pi user and `recipes.local` as the address. Replace `pi` with your login name. For
@@ -148,6 +149,40 @@ challenge means nothing is exposed to the internet, and phones need no setup. Po
 `recipes.example.com` at the Pi, then use that name and the certificate paths certbot prints in the nginx config.
 
 ## 6. nginx
+
+**Does this Pi's nginx already serve other things?** Check with `ls /etc/nginx/sites-enabled/` and look inside the
+files listed there. If your `default` site has your own `location` blocks (other apps, other pages), **don't replace
+it**. Use option A to add the app at `/cookbook/` alongside them. Option B gives the app a site of its own.
+
+### Option A: add the app at `/cookbook/` to your existing site
+
+This adds two small include files; the only change to your existing config is one `include` line.
+
+```bash
+sudo cp /opt/recipes/deploy/nginx-cookbook-http.conf /etc/nginx/conf.d/cookbook.conf && sudo cp /opt/recipes/deploy/nginx-cookbook-locations.conf /etc/nginx/snippets/cookbook.conf
+```
+
+Find the file your enabled `default` site really is, and back it up:
+
+```bash
+F=$(readlink -f /etc/nginx/sites-enabled/default) && echo "$F" && sudo cp "$F" "$F.bak"
+```
+
+Add the include line after `server_name _;` (the first occurrence only):
+
+```bash
+sudo sed -i '0,/^[[:space:]]*server_name _;/s//&\n\tinclude snippets\/cookbook.conf;/' "$F" && grep -n 'cookbook' "$F"
+```
+
+```bash
+sudo nginx -t && sudo systemctl reload nginx
+```
+
+The app is at `http://<pi-name>.local/cookbook/`. If `nginx -t` fails, restore the backup with
+`sudo cp "$F.bak" "$F"`. Recipe folder paths are in `/etc/nginx/snippets/cookbook.conf` (lines marked `←`). For
+HTTPS with this option, enable SSL in your existing server block (see step 5); the snippet works unchanged.
+
+### Option B: a dedicated site for the app
 
 ```bash
 sudo cp /opt/recipes/deploy/nginx.conf.example /etc/nginx/sites-available/recipes
