@@ -9,7 +9,10 @@ Guidance for Claude (and humans) working in this repo. The requirements live in 
 - **Single JSON-LD normalizer and taxonomy.** All parsing of recipe shapes goes in `site/js/jsonld.js`, and all facet values, synonyms and inference rules go in `site/js/taxonomy.js`. The browser and `tools/` both import them. Don't duplicate the logic or hard-code facet values anywhere else.
 - **Facet values are fixed** (Meal, Protein, Carb; see README → Categories). Changing them is a requirements change: update the README first.
 - **Mobile-first.** Write the base CSS for a 390 px-wide phone and add tablet layouts with `min-width` media queries. Touch targets ≥ 44 px, nothing relies on hover, and filters live in a bottom sheet on phones (N4).
-- **Never commit real/personal recipes.** `site/recipes/` is gitignored. Recipes in `samples/recipes/` must be original text written for this repo (CC0). Do not copy recipes from websites or cookbooks.
+- **Never commit real/personal recipes or cookbook data.** `site/recipes/` is gitignored. Recipes in `samples/recipes/` must be original text written for this repo (CC0). Do not copy recipes from websites or cookbooks.
+  - This includes **contents lists or indexes of real books** (`books.json` entries with real titles and pages), **imported recipes** and **review sheets**. They belong only on the owner's NAS.
+  - Prepare them outside the repository (a scratch folder, or the gitignored `local/` folder) and hand them over as files. They never go in a commit or a PR.
+  - The repository only gets generic tools and fictional sample data.
 
 ## Commands
 ```bash
