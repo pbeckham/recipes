@@ -1,0 +1,16 @@
+{
+  "books": [
+    {
+      "name": "The Sample Kitchen",
+      "author": "Recipes sample collection",
+      "recipes": [
+        { "title": "Apple & Cinnamon Overnight Oats", "page": 8 },
+        { "title": "Shakshuka", "page": 12 },
+        { "title": "Roast Tomato & Red Pepper Soup", "page": 24 },
+        { "title": "Smoky Three-Bean Chilli", "page": 46 },
+        { "title": "Lemon Posset", "page": 88 },
+        { "title": "Rhubarb & Ginger Fool", "page": 92 }
+      ]
+    }
+  ]
+}

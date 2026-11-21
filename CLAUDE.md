@@ -55,4 +55,5 @@ Keep 15–20 samples that together:
 - cover **every Meal, Protein and Carb value at least once**, with some recipes having several values in a facet;
 - include 2–3 recipes with **no facet tags**, so inference is exercised on the Pages demo;
 - spread total times across all the time-filter presets, with one recipe that has no time at all;
+- link some recipes to a cookbook in each supported way: `isPartOf`, a `book:` keyword, and matched by title through `samples/recipes/books.json`. That file must include missing entries and one book without a contents list, so the Books page shows partial progress;
 - exercise every R2 shape: `HowToSection`, plain-string instructions, `@graph`, `@type` arrays, missing image, missing `totalTime`, keyword string vs array, subfolders, and a relative image path. Images in samples should be small (< 150 KB), original or CC0, or omitted.

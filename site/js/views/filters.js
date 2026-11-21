@@ -26,14 +26,16 @@ function option({ type, name, value, label }) {
  * @param {object} options
  * @param {{ term: string, count: number }[]} options.vocabulary
  * @param {string[]} options.cuisines
+ * @param {string[]} [options.books]   cookbook names
  * @param {(patch: Partial<import('../search.js').SearchState>) => void} options.onChange
  */
-export function createFilterSheet({ vocabulary, cuisines, onChange }) {
+export function createFilterSheet({ vocabulary, cuisines, books = [], onChange }) {
   const id = `sheet-${++uid}`;
   let state = null;
 
   // --- category facets (+ cuisine)
   const groups = [...FACETS.map((f) => ({ key: f, label: FACET_LABELS[f], values: FACET_VALUES[f] }))];
+  if (books.length) groups.push({ key: 'book', label: 'Book', values: books });
   if (cuisines.length) groups.push({ key: 'cuisine', label: 'Cuisine', values: cuisines });
 
   const facetOptions = {};
@@ -141,7 +143,7 @@ export function createFilterSheet({ vocabulary, cuisines, onChange }) {
   const close = () => dialog.open && dialog.close();
   closeButton.addEventListener('click', close);
   showButton.addEventListener('click', close);
-  clearButton.addEventListener('click', () => onChange({ meal: [], protein: [], carb: [], cuisine: [], ing: [], maxTime: null }));
+  clearButton.addEventListener('click', () => onChange({ meal: [], protein: [], carb: [], cuisine: [], book: [], ing: [], maxTime: null }));
   // Tapping the backdrop closes the sheet.
   dialog.addEventListener('click', (e) => e.target === dialog && close());
 

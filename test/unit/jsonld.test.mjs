@@ -200,3 +200,19 @@ test('resolveRelativePath', () => {
   assert.equal(resolveRelativePath('a/b.json', 'https://example.com/i.jpg'), 'https://example.com/i.jpg');
   assert.equal(resolveRelativePath('a/b.json', '/images/i.jpg'), '/images/i.jpg');
 });
+
+test('book: isPartOf Book, plain string, named work, or book: keyword; page: keyword', () => {
+  const r = (extra) => extractRecipe({ ...base, ...extra });
+  assert.equal(r({ isPartOf: { '@type': 'Book', name: 'Salt, Fat, Acid, Heat' } }).book, 'Salt, Fat, Acid, Heat');
+  assert.equal(r({ isPartOf: "Jamie's America" }).book, "Jamie's America");
+  assert.equal(r({ isPartOf: [{ '@type': 'WebSite', name: 'Example' }, { '@type': 'Book', name: 'River Cottage Veg' }] }).book, 'River Cottage Veg');
+  assert.equal(r({ isPartOf: { '@type': 'CreativeWork', name: 'My Notes' } }).book, 'My Notes');
+  assert.equal(r({ isPartOf: 'https://example.com/x' }).book, null);
+  assert.equal(r({ keywords: 'book:River Cottage Veg, page:58, quick' }).book, 'River Cottage Veg');
+  const k = r({ keywords: ['page: 112', 'p. 3', 'weeknight'] });
+  assert.equal(k.page, '112');
+  assert.deepEqual(k.keywords, ['weeknight']);
+  assert.equal(r({ isPartOf: { '@type': 'Book', name: 'A' }, keywords: 'book:B' }).book, 'A', 'isPartOf wins');
+  assert.equal(r({}).book, null);
+  assert.equal(r({}).page, null);
+});

@@ -200,6 +200,13 @@ sudo nginx -t && sudo systemctl reload nginx
 
 Open `https://recipes.local/` on your phone. Add it to the home screen for one-tap access.
 
+## Cookbook progress (optional)
+
+To see how much of each cookbook you have, put a `books.json` contents list in the recipes folder, next to your
+recipes: `/mnt/chipolata/recipes/processed/books.json`. The index timer picks it up automatically, and the app's
+**Books** page shows each book's progress and what's still to add. The format is in the main README under
+"Cookbooks". To keep it somewhere else, add `--books /path/to/books.json` to `ExecStart=` in the service.
+
 ## Day to day
 
 - **Adding or editing recipes:** save the files into `processed/` on the NAS as you do now. They appear within 5

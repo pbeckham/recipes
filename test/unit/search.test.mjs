@@ -31,6 +31,7 @@ test('parseState/serializeState round-trip, stable order, defaults omitted', () 
     protein: [],
     carb: ['Rice'],
     cuisine: ['Spanish'],
+    book: [],
     ing: ['garlic'],
     maxTime: 30,
     sort: 'time',
@@ -193,4 +194,15 @@ test('performance: 1,500 recipes filter in well under a frame budget', () => {
   for (let i = 0; i < 20; i++) search(big, parseState('q=chick&meal=Main&meal=Soup&ing=garlic&time=60'));
   const per = (performance.now() - t0) / 20;
   assert.ok(per < 30, `${per.toFixed(1)} ms per search`);
+});
+
+test('book filter: by cookbook, with counts; survives the URL', () => {
+  const r = run('book=The+Sample+Kitchen');
+  assert.deepEqual(r.results.map((e) => e.name).sort(), ['Apple & Cinnamon Overnight Oats', 'Lemon Posset', 'Roast Tomato & Red Pepper Soup', 'Shakshuka']);
+  assert.equal(r.counts.book.get('The Sample Kitchen'), 4);
+  assert.equal(r.counts.book.get('Weekend Cooking'), 1);
+  assert.deepEqual(ids(run('book=Weekend+Cooking&book=The+Sample+Kitchen&meal=Main')), ['mains/slow-cooked-beef-ragu']);
+  const s = { ...emptyState(), book: ["Jamie's America", 'Salt, Fat, Acid & Heat'] };
+  assert.deepEqual(parseState(serializeState(s)).book, s.book);
+  assert.equal(activeFilterCount(s), 2);
 });

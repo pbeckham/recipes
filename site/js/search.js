@@ -16,7 +16,7 @@ export const SORTS = {
 };
 
 /** Filters with several values, in URL order. */
-const LIST_KEYS = ['meal', 'protein', 'carb', 'cuisine', 'ing'];
+const LIST_KEYS = ['meal', 'protein', 'carb', 'cuisine', 'book', 'ing'];
 
 // Words that carry no meaning in a recipe search ("pasta with beef").
 const QUERY_STOPWORDS = new Set(['a', 'an', 'and', 'the', 'with', 'of', 'in', 'for', 'or', 'on', 'to']);
@@ -28,6 +28,7 @@ const QUERY_STOPWORDS = new Set(['a', 'an', 'and', 'the', 'with', 'of', 'in', 'f
  * @property {string[]} protein
  * @property {string[]} carb
  * @property {string[]} cuisine
+ * @property {string[]} book       cookbook names
  * @property {string[]} ing        ingredients that must all be present
  * @property {number | null} maxTime  minutes, one of TIME_PRESETS
  * @property {string} sort         '' = default (relevance with a query, else name)
@@ -35,7 +36,7 @@ const QUERY_STOPWORDS = new Set(['a', 'an', 'and', 'the', 'with', 'of', 'in', 'f
 
 /** @returns {SearchState} */
 export function emptyState() {
-  return { q: '', meal: [], protein: [], carb: [], cuisine: [], ing: [], maxTime: null, sort: '' };
+  return { q: '', meal: [], protein: [], carb: [], cuisine: [], book: [], ing: [], maxTime: null, sort: '' };
 }
 
 const unique = (arr) => [...new Set(arr)];
@@ -54,6 +55,7 @@ export function parseState(query) {
     state[facet] = unique(params.getAll(facet).filter((v) => FACET_VALUES[facet].includes(v)));
   }
   state.cuisine = unique(params.getAll('cuisine').map((v) => v.trim()).filter(Boolean));
+  state.book = unique(params.getAll('book').map((v) => v.trim()).filter(Boolean));
   state.ing = unique(params.getAll('ing').map((v) => normalizeText(v)).filter(Boolean));
   const time = Number(params.get('time'));
   state.maxTime = TIME_PRESETS.includes(time) ? time : null;
@@ -146,7 +148,7 @@ const anyOf = (selected, values) => !selected.length || selected.some((v) => val
  * @property {any[]} results          matching index entries, sorted
  * @property {number} hiddenNoTime    recipes hidden only because they have no known time
  * @property {Record<string, Map<string, number>>} counts  per filter: value → matches if that value were (also) chosen;
- *                                    keys meal, protein, carb, cuisine, time (preset → count)
+ *                                    keys meal, protein, carb, cuisine, book, time (preset → count)
  */
 
 /**
@@ -176,14 +178,15 @@ export function search(prepared, state) {
       protein: anyOf(state.protein, e.protein),
       carb: anyOf(state.carb, e.carb),
       cuisine: anyOf(state.cuisine, e.cuisine),
+      book: anyOf(state.book, e.book ? [e.book] : []),
       time: !state.maxTime || (e.totalMinutes != null && e.totalMinutes <= state.maxTime),
     });
   }
 
-  const groups = ['meal', 'protein', 'carb', 'cuisine', 'time'];
+  const groups = ['meal', 'protein', 'carb', 'cuisine', 'book', 'time'];
   const passesExcept = (row, skip) => groups.every((g) => g === skip || row[g]);
 
-  const counts = { meal: new Map(), protein: new Map(), carb: new Map(), cuisine: new Map(), time: new Map() };
+  const counts = { meal: new Map(), protein: new Map(), carb: new Map(), cuisine: new Map(), book: new Map(), time: new Map() };
   for (const facet of FACETS) for (const v of FACET_VALUES[facet]) counts[facet].set(v, 0);
   for (const t of TIME_PRESETS) counts.time.set(t, 0);
 
@@ -192,9 +195,10 @@ export function search(prepared, state) {
   for (const row of rows) {
     const { e } = row;
     if (passesExcept(row, null)) results.push(e);
-    for (const facet of ['meal', 'protein', 'carb', 'cuisine']) {
+    for (const facet of ['meal', 'protein', 'carb', 'cuisine', 'book']) {
       if (!passesExcept(row, facet)) continue;
-      for (const v of e[facet]) counts[facet].set(v, (counts[facet].get(v) ?? 0) + 1);
+      const values = facet === 'book' ? (e.book ? [e.book] : []) : e[facet];
+      for (const v of values) counts[facet].set(v, (counts[facet].get(v) ?? 0) + 1);
     }
     if (passesExcept(row, 'time')) {
       if (e.totalMinutes == null) {
