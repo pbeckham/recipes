@@ -8,12 +8,14 @@ import { createHome } from './views/home.js';
 import { parseState, serializeState } from './search.js';
 import { createWakeLock } from './cooking.js';
 import { renderRecipe } from './views/recipe.js';
+import { renderBooks } from './views/books.js';
 import { messageView } from './views/common.js';
 
 const APP_NAME = 'Recipes';
 const wakeLock = createWakeLock();
 const viewEl = /** @type {HTMLElement} */ (document.getElementById('view'));
 const backEl = /** @type {HTMLAnchorElement} */ (document.getElementById('back'));
+const booksLink = /** @type {HTMLAnchorElement} */ (document.getElementById('books-link'));
 
 if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
 
@@ -27,12 +29,13 @@ let cameFromHome = false;
 /** The built list view, reused when returning so "back" is instant and keeps its scroll position. */
 let home = null;
 
-/** @returns {{ name: 'home', query: string } | { name: 'recipe', id: string } | { name: 'unknown' }} */
+/** @returns {{ name: 'home', query: string } | { name: 'recipe', id: string } | { name: 'books' } | { name: 'unknown' }} */
 function parseRoute(hash) {
   const raw = hash.replace(/^#\/?/, '');
   const q = raw.indexOf('?');
   const path = q < 0 ? raw : raw.slice(0, q);
   if (path === '') return { name: 'home', query: q < 0 ? '' : raw.slice(q + 1) };
+  if (path === 'books') return { name: 'books' };
   const [first, ...rest] = path.split('/');
   if (first === 'recipe' && rest.length) {
     try {
@@ -111,11 +114,13 @@ async function route() {
 
   if (currentRoute === 'home' && r.name !== 'home') rememberHomePosition();
   const returningHome = r.name === 'home' && currentRoute !== 'home' && currentRoute !== '';
-  cameFromHome = currentRoute === 'home' && r.name === 'recipe';
+  cameFromHome = currentRoute === 'home' && r.name !== 'home';
   currentRoute = r.name;
   // The screen only needs to stay on while a recipe is open (R12).
   if (r.name !== 'recipe') wakeLock?.set(false);
   backEl.hidden = r.name === 'home';
+  if (r.name === 'books') booksLink.setAttribute('aria-current', 'page');
+  else booksLink.removeAttribute('aria-current');
   document.documentElement.dataset.route = r.name;
 
   let index;
@@ -142,6 +147,10 @@ async function route() {
     }
     show(home.node, { scrollY: returningHome ? homeScrollY : 0 });
     if (returningHome) restoreHomeAnchor();
+    return;
+  }
+  if (r.name === 'books') {
+    show(renderBooks(index), { title: 'Books' });
     return;
   }
   if (r.name === 'unknown') {

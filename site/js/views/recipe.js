@@ -7,6 +7,19 @@ import { scaleLine, formatAmount, maxServings } from '../scale.js';
 import { loadCookState, saveCookState } from '../cooking.js';
 import { badges, recipeImage } from './common.js';
 
+/** "From The Sample Kitchen, p. 12", linking to the book's other recipes. */
+function bookLine(entry) {
+  if (!entry.book) return null;
+  const guessed = entry.inferred?.includes('book');
+  return h(
+    'p',
+    { class: 'recipe-book' },
+    icon('book'),
+    h('span', null, 'From ', h('a', { href: `#/?${new URLSearchParams({ book: entry.book })}` }, entry.book), entry.page ? `, p. ${entry.page}` : ''),
+    guessed ? h('span', { class: 'muted small' }, ' (matched by title)') : null,
+  );
+}
+
 /** @param {[string, string][]} facts */
 function factList(facts) {
   const shown = facts.filter(([, v]) => v);
@@ -297,6 +310,7 @@ export function renderRecipe(entry, recipe, { error, wakeLock = null } = {}) {
           h('h1', { tabindex: '-1' }, entry.name),
           description ? description.split('\n').map((p) => h('p', { class: 'recipe-description' }, p)) : null,
           badges(entry, { labelled: true }),
+          bookLine(entry),
           anyInferred ? h('p', { class: 'muted small' }, 'Dashed categories were guessed from the recipe.') : null,
           factList(facts),
         ),

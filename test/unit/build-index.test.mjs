@@ -45,9 +45,10 @@ test('fixtures: image paths resolve relative to the recipes folder', async () =>
 
 test('index entries have the documented shape', async () => {
   const { index } = await buildIndex(fixtures);
-  const keys = ['id', 'file', 'name', 'description', 'image', 'meal', 'protein', 'carb', 'inferred', 'cuisine', 'keywords', 'totalMinutes', 'yield', 'ingredients', 'added'];
+  const keys = ['id', 'file', 'name', 'description', 'image', 'meal', 'protein', 'carb', 'book', 'page', 'inferred', 'cuisine', 'keywords', 'totalMinutes', 'yield', 'ingredients', 'added'];
   for (const r of index.recipes) assert.deepEqual(Object.keys(r), keys);
   assert.ok(Array.isArray(index.ingredientVocabulary));
+  assert.ok(Array.isArray(index.books));
 });
 
 test('buildVocabulary counts recipes per term; bigrams need 2+ recipes', () => {
@@ -142,5 +143,35 @@ test('CLI --if-changed only rewrites when recipes change', async () => {
 
   await rm(path.join(dir, 'sauces/basil-pesto.json'));
   assert.match(run().stdout, /^Wrote .*\(18 recipes/);
+  await rm(dir, { recursive: true });
+});
+
+test('samples: books from isPartOf, book: keyword and title matching, with progress', async () => {
+  const { index } = await buildIndex(samples);
+  const get = (id) => index.recipes.find((r) => r.id === id);
+  assert.deepEqual([get('breakfast/shakshuka').book, get('breakfast/shakshuka').page], ['The Sample Kitchen', '12']);
+  assert.deepEqual([get('desserts/lemon-posset').book, get('desserts/lemon-posset').page], ['The Sample Kitchen', '88']);
+  assert.deepEqual([get('soups/roast-tomato-soup').book, get('soups/roast-tomato-soup').page], ['The Sample Kitchen', '24']);
+  assert.ok(get('soups/roast-tomato-soup').inferred.includes('book'), 'matched by title');
+  assert.ok(!get('breakfast/shakshuka').inferred.includes('book'));
+  assert.equal(get('mains/slow-cooked-beef-ragu').book, 'Weekend Cooking');
+  assert.equal(get('egg-fried-rice').book, null);
+
+  const kitchen = index.books.find((b) => b.name === 'The Sample Kitchen');
+  assert.deepEqual({ total: kitchen.total, have: kitchen.have, covered: kitchen.covered }, { total: 6, have: 4, covered: 4 });
+  assert.deepEqual(kitchen.missing.map((e) => e.page), ['46', '92']);
+  assert.equal(index.books.find((b) => b.name === 'Weekend Cooking').total, null);
+});
+
+test('--books points at a contents list elsewhere; a bad one warns', async () => {
+  const dir = await mkdtemp(path.join(os.tmpdir(), 'books-'));
+  const file = path.join(dir, 'contents.json');
+  await import('node:fs/promises').then((fs) => fs.writeFile(file, JSON.stringify({ books: [{ name: 'Other', recipes: ['Shakshuka'] }] })));
+  const { index, warnings } = await buildIndex(samples, { booksFile: file });
+  assert.equal(index.recipes.find((r) => r.id === 'breakfast/shakshuka').book, 'The Sample Kitchen', 'explicit book still wins');
+  assert.equal(index.recipes.find((r) => r.id === 'soups/roast-tomato-soup').book, null, 'sample books.json not used');
+  assert.deepEqual(warnings, []);
+  const missing = await buildIndex(samples, { booksFile: path.join(dir, 'nope.json') });
+  assert.match(missing.warnings[0].message, /books file not found/);
   await rm(dir, { recursive: true });
 });

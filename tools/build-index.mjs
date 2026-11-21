@@ -9,6 +9,7 @@ import { parseArgs } from 'node:util';
 import { extractRecipe, resolveRelativePath, isAbsoluteRef } from '../site/js/jsonld.js';
 import { categorize, FACETS, FACET_LABELS, FACET_VALUES, UNCATEGORISED } from '../site/js/taxonomy.js';
 import { ingredientTerms } from '../site/js/text.js';
+import { parseCatalog, matchBooks } from '../site/js/books.js';
 
 export const INDEX_VERSION = 1;
 const RECIPE_EXT = /\.(jsonld|json)$/i;
@@ -21,6 +22,7 @@ files and writes <recipes-dir>/index.json.
 
 Options:
   --out <file>   Write the index somewhere else
+  --books <file> Cookbook contents list (default: <recipes-dir>/books.json, if present)
   --dry-run      Don't write anything
   --if-changed   Only write when the recipes changed (ignores the timestamp),
                  so a timer can run this often without clients re-downloading
@@ -75,17 +77,44 @@ export function buildVocabulary(recipes) {
 }
 
 /**
+ * Load a books.json contents list. A missing default file is fine; a missing
+ * file that was asked for, or an invalid one, gives warnings.
+ * @returns {Promise<import('../site/js/books.js').CatalogBook[]>}
+ */
+async function loadCatalog(file, required, warn) {
+  let text;
+  try {
+    text = await readFile(file, 'utf8');
+  } catch {
+    if (required) warn(path.basename(file), `books file not found: ${file}`);
+    return [];
+  }
+  let data;
+  try {
+    data = JSON.parse(text);
+  } catch (e) {
+    warn(path.basename(file), `invalid JSON: ${e.message}`);
+    return [];
+  }
+  const { books, warnings } = parseCatalog(data);
+  for (const w of warnings) warn(path.basename(file), w);
+  return books;
+}
+
+/**
  * Build the index for a recipes folder.
  * @param {string} dir
- * @param {{ now?: Date }} [options]
+ * @param {{ now?: Date, booksFile?: string }} [options]
+ *   booksFile: cookbook contents list; default <dir>/books.json when it exists
  * @returns {Promise<{ index: object, warnings: { file: string, message: string }[] }>}
  */
-export async function buildIndex(dir, { now = new Date() } = {}) {
+export async function buildIndex(dir, { now = new Date(), booksFile } = {}) {
   const warnings = [];
   const warn = (file, message) => warnings.push({ file, message });
   const files = (await walk(dir))
-    .filter((f) => RECIPE_EXT.test(f) && f !== 'index.json')
+    .filter((f) => RECIPE_EXT.test(f) && f !== 'index.json' && f !== 'books.json')
     .sort();
+  const catalog = await loadCatalog(booksFile ?? path.join(dir, 'books.json'), booksFile != null, warn);
 
   const recipes = [];
   const seen = new Map();
@@ -138,6 +167,8 @@ export async function buildIndex(dir, { now = new Date() } = {}) {
       meal: cat.meal,
       protein: cat.protein,
       carb: cat.carb,
+      book: recipe.book,
+      page: recipe.page,
       inferred: cat.inferred,
       cuisine: recipe.cuisine,
       keywords: recipe.keywords,
@@ -149,11 +180,22 @@ export async function buildIndex(dir, { now = new Date() } = {}) {
   }
   recipes.sort((a, b) => a.name.localeCompare(b.name) || a.id.localeCompare(b.id));
 
+  // Which book each recipe is from (named in its file, or matched by title
+  // against the contents list), and progress per book.
+  const { assigned, books } = matchBooks(recipes, catalog);
+  for (const r of recipes) {
+    const a = assigned.get(r.id);
+    r.book = a?.book ?? null;
+    r.page = a?.page ?? r.page;
+    if (a?.inferred) r.inferred = [...r.inferred, 'book'];
+  }
+
   return {
     index: {
       version: INDEX_VERSION,
       generated: now.toISOString(),
       recipes,
+      books,
       ingredientVocabulary: buildVocabulary(recipes),
     },
     warnings,
@@ -174,7 +216,17 @@ export function formatReport(index, skipped) {
   const noTime = index.recipes.filter((r) => r.totalMinutes == null);
   lines.push(`Time     ${noTime.length} without a known total time${noTime.length ? `: ${noTime.map((r) => r.id).join(', ')}` : ''}`);
 
-  const flagged = index.recipes.filter((r) => r.inferred.length || FACETS.some((f) => !r[f].length));
+  if (index.books?.length) {
+    lines.push('', 'Books');
+    for (const b of index.books) {
+      const progress = b.total != null ? `${b.covered} of ${b.total} from the contents list (${b.total ? Math.round((100 * b.covered) / b.total) : 0}%)` : 'no contents list';
+      lines.push(`  ${b.name}: ${b.have} ${b.have === 1 ? 'recipe' : 'recipes'} · ${progress}`);
+    }
+    const noBook = index.recipes.filter((r) => !r.book).length;
+    if (noBook) lines.push(`  (no book: ${noBook})`);
+  }
+
+  const flagged = index.recipes.filter((r) => FACETS.some((f) => r.inferred.includes(f) || !r[f].length));
   lines.push('', `Inferred or uncategorised facets (${flagged.length}) — add meal:/protein:/carb: keywords to fix:`);
   if (!flagged.length) lines.push('  (none)');
   for (const r of flagged) {
@@ -231,6 +283,7 @@ async function main(argv) {
       allowPositionals: true,
       options: {
         out: { type: 'string' },
+        books: { type: 'string' },
         'dry-run': { type: 'boolean' },
         'if-changed': { type: 'boolean' },
         report: { type: 'boolean' },
@@ -257,7 +310,7 @@ async function main(argv) {
     return 2;
   }
 
-  const { index, warnings } = await buildIndex(dir);
+  const { index, warnings } = await buildIndex(dir, { booksFile: values.books ? path.resolve(values.books) : undefined });
   for (const w of warnings) console.warn(`warning: ${w.file}: ${w.message}`);
   const skipped = new Set(warnings.filter((w) => !index.recipes.some((r) => r.file === w.file)).map((w) => w.file)).size;
 

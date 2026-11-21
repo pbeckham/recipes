@@ -198,10 +198,50 @@ Inference is a convenience for untagged recipes, such as ones exported from webs
 - `inferred` lists the facets whose values were guessed rather than tagged.
 - `keywords` excludes facet-prefixed keywords.
 - `added` is the file's modification time, used for "newest" sorting.
+- `book` and `page` say which cookbook a recipe comes from (see [Cookbooks](#cookbooks)). `inferred` includes `"book"` when the book was matched by title.
+- The top level also contains `books`: `[{ "name", "author", "total", "have", "covered", "missing": [{ "title", "page" }] }]`. `total` is `null` for a book without a contents list.
 - The top level also contains `ingredientVocabulary`: `[{ "term": "garlic", "count": 10 }, …]`, most common first. These are normalized single words and common two-word terms ("olive oil"), counted by the number of recipes using them. The ingredient filter uses it for suggestions.
 - `index.json` is written without whitespace to keep it small.
 
 ---
+
+## Cookbooks
+
+Recipes can say which cookbook they come from. The app then shows "From *Book*, p. 112" on the recipe page, offers a **Book** filter, and has a **Books** page showing how much of each book is in the collection.
+
+**In a recipe file:**
+
+```json
+"isPartOf": { "@type": "Book", "name": "Jamie's America" },
+"keywords": "page:112, …"
+```
+
+A `book:` keyword (`"keywords": "book:River Cottage Veg, page:58"`) also works for names without commas. `isPartOf` is the standard schema.org field and works for any name.
+
+**A contents list** (`books.json` in the recipes folder, optional) lets the app track progress and find books for recipes that don't name one:
+
+```json
+{
+  "books": [
+    {
+      "name": "Jamie's America",
+      "author": "Jamie Oliver",
+      "recipes": [
+        { "title": "Sloppy Joes", "page": 112 },
+        { "title": "Gumbo", "page": 40 },
+        "A recipe without a page number"
+      ]
+    }
+  ]
+}
+```
+
+With a contents list:
+- **Recipes that don't name a book are matched by title.** Matching ignores case, accents, "&" versus "and", a leading "The", and text in brackets. A title that appears in more than one book isn't guessed. Matches are marked "(matched by title)".
+- **Each contents entry counts as done** when a recipe from that book has the same title. Failing that, a recipe with the same page number counts.
+- **The Books page shows progress for each book** ("34 of 120 recipes · 28%") and lists what's still to add, with page numbers. It also notes recipes that claim a book but match nothing in its contents list, usually a typo in the title.
+
+`build-index.mjs` reads `<recipes-folder>/books.json` automatically, or another file given with `--books <file>`. `--report` prints progress for each book.
 
 ## Searching and filtering
 
@@ -301,7 +341,9 @@ Pushing to `main` runs `.github/workflows/pages.yml`. It copies `site/`, copies 
 | 3 ✅ | Search, category filters (bottom sheet), time filter and sort, ingredient filter | R6–R8, R18, R19, N6 |
 | 4 ✅ | Cooking helpers: scaler, check-off, wake lock, print | R10–R13 |
 | 5 ✅ | Raspberry Pi deployment: deploy script, nginx config, index timer, HTTPS guide | — |
-| Later | Favourites, shopping list, PWA/offline, validator CLI, import-from-URL CLI, ingredient exclusion, "what can I make?" pantry matching | — |
+| 6 ✅ | Cookbooks: book and page on recipes, Book filter, Books progress page, `books.json` contents lists | — |
+| Next | Import by URL: fetch a recipe page's JSON-LD and photo into the recipes folder, recording source, book and page | — |
+| Later | Favourites, shopping list, PWA/offline, validator CLI, ingredient exclusion, "what can I make?" pantry matching | — |
 
 ## Open questions
 - Units: show recipes as written, or add metric/imperial conversion? (Currently: as written.)

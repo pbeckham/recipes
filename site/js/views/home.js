@@ -89,6 +89,7 @@ function activeChips(state, onChange) {
   for (const key of [...FACETS, 'cuisine']) {
     for (const v of state[key]) chip(v, v, { [key]: state[key].filter((x) => x !== v) });
   }
+  for (const v of state.book) chip(v, `book ${v}`, { book: state.book.filter((x) => x !== v) });
   if (state.maxTime) chip(timeLabel(state.maxTime), `total time ${timeLabel(state.maxTime)}`, { maxTime: null });
   for (const t of state.ing) chip(`with ${t}`, `must include ${t}`, { ing: state.ing.filter((x) => x !== t) });
   return chips;
@@ -140,6 +141,7 @@ export function createHome(index, { onStateChange = () => {} } = {}) {
   const sheet = createFilterSheet({
     vocabulary: index.ingredientVocabulary ?? [],
     cuisines: cuisineValues(recipes),
+    books: (index.books ?? []).filter((b) => b.have > 0).map((b) => b.name),
     onChange: (patch) => apply({ ...state, ...patch }),
   });
 

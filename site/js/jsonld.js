@@ -15,6 +15,8 @@
  * @property {string[]} categories          Raw recipeCategory values
  * @property {string[]} keywords            Keywords without facet prefixes
  * @property {{ meal: string[], protein: string[], carb: string[] }} facetTags  Raw values of meal:/protein:/carb: keywords
+ * @property {string | null} book           Cookbook it comes from (isPartOf, or a book: keyword)
+ * @property {string | null} page           Page in that book (page: keyword)
  * @property {number | null} prepMinutes
  * @property {number | null} cookMinutes
  * @property {number | null} totalMinutes   totalTime, or prep + cook when missing
@@ -152,16 +154,37 @@ export function textList(v) {
 }
 
 const FACET_PREFIX = /^(meal|protein|carb)\s*:\s*(.+)$/i;
+const BOOK_PREFIX = /^book\s*:\s*(.+)$/i;
+const PAGE_PREFIX = /^(?:page|p)\s*[:.]\s*(\S.*)$/i;
 
 function splitKeywords(v) {
   const keywords = [];
   const facetTags = { meal: [], protein: [], carb: [] };
+  let book = null;
+  let page = null;
   for (const k of textList(v)) {
-    const m = FACET_PREFIX.exec(k);
-    if (m) facetTags[m[1].toLowerCase()].push(m[2].trim());
+    let m;
+    if ((m = FACET_PREFIX.exec(k))) facetTags[m[1].toLowerCase()].push(m[2].trim());
+    else if ((m = BOOK_PREFIX.exec(k))) book ??= m[1].trim();
+    else if ((m = PAGE_PREFIX.exec(k))) page ??= m[1].trim();
     else keywords.push(k);
   }
-  return { keywords, facetTags };
+  return { keywords, facetTags, book, page };
+}
+
+/**
+ * The book a recipe comes from: schema.org isPartOf (a Book, or any named
+ * work, or a plain string). Falls back to a "book:" keyword, which suits
+ * simple names (keywords are split on commas).
+ * @param {unknown} isPartOf
+ * @param {string | null} keywordBook
+ * @returns {string | null}
+ */
+function parseBook(isPartOf, keywordBook) {
+  const parts = toArray(isPartOf);
+  const named = (it) => (typeof it === 'string' ? oneLine(it) : it && typeof it === 'object' ? oneLine(it.name) : '');
+  const book = parts.find((it) => hasType(it, 'Book') && named(it)) ?? parts.find((it) => named(it) && !/^https?:/i.test(named(it)));
+  return (book ? named(book) : '') || keywordBook || null;
 }
 
 function firstImage(v) {
@@ -303,7 +326,7 @@ export function normalizeRecipe(node) {
   if (totalMinutes == null && (prepMinutes != null || cookMinutes != null)) {
     totalMinutes = (prepMinutes ?? 0) + (cookMinutes ?? 0);
   }
-  const { keywords, facetTags } = splitKeywords(node.keywords);
+  const { keywords, facetTags, book: keywordBook, page } = splitKeywords(node.keywords);
   const y = parseYield(node.recipeYield ?? node.yield);
   return {
     name: oneLine(node.name),
@@ -315,6 +338,8 @@ export function normalizeRecipe(node) {
     categories: textList(node.recipeCategory),
     keywords,
     facetTags,
+    book: parseBook(node.isPartOf, keywordBook),
+    page,
     prepMinutes,
     cookMinutes,
     totalMinutes,

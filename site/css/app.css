@@ -226,12 +226,32 @@ pre {
   display: none;
 }
 
-/* On a recipe the back link leads; the brand moves to the right. */
+/* Away from the list, the back link replaces the brand. */
 [data-route='recipe'] .brand,
+[data-route='books'] .brand,
 [data-route='unknown'] .brand {
+  display: none;
+}
+
+.app-nav {
   margin-left: auto;
-  font-size: 1rem;
+}
+
+.app-nav-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap);
+  padding: 0 4px;
   color: var(--text-2);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.app-nav-link[aria-current='page'] {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 6px;
+  text-decoration-thickness: 2px;
 }
 
 /* ------------------------------------------------------------ page */
@@ -1346,6 +1366,121 @@ html:has(dialog[open]) {
 
   .search-row {
     max-width: 720px;
+  }
+}
+
+/* ------------------------------------------------------------ books */
+.recipe-book {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 6px;
+  color: var(--text-2);
+  font-size: 0.9375rem;
+}
+
+.recipe-book a {
+  font-weight: 600;
+}
+
+.book-list {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.book-card {
+  display: grid;
+  gap: 8px;
+  padding: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.book-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.book-head h2 {
+  font-size: 1.25rem;
+}
+
+.book-head .button {
+  flex: none;
+}
+
+.book-progress {
+  width: 100%;
+  height: 10px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--surface-2);
+  overflow: hidden;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.book-progress::-webkit-progress-bar {
+  background: var(--surface-2);
+  border-radius: 999px;
+}
+
+.book-progress::-webkit-progress-value {
+  background: var(--accent);
+  border-radius: 999px;
+}
+
+.book-progress::-moz-progress-bar {
+  background: var(--accent);
+  border-radius: 999px;
+}
+
+.book-missing summary {
+  min-height: var(--tap);
+  display: flex;
+  align-items: center;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.missing-list {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0 0 4px;
+  list-style: none;
+}
+
+.missing-list li {
+  display: grid;
+  grid-template-columns: 4.5rem 1fr;
+  gap: 8px;
+}
+
+.missing-page {
+  color: var(--text-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.book-done {
+  color: var(--carb-text);
+  font-weight: 600;
+}
+
+.books-foot {
+  margin-top: 16px;
+}
+
+@media (min-width: 700px) {
+  .book-list {
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    align-items: start;
   }
 }
 
